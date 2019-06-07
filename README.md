@@ -86,23 +86,21 @@ tgt+ctx多头+src多头
 34.不能成句。截取5-80长度
 35.循环学习率 无效
 36.37版本回滚至34版本，此后git，测试通过后发布。为适应git训练测试数据外置，预处理暂未处理。只有模型过大上传不了。
-
+37.添加组件后太慢，一定几率使用context_encoder,share_encoder。有可能不收敛，开始不要加。之后概率逐渐加大。
+38.简化了装载模型步骤，下一步抽象 【失败】 不知为何 初始化对象的参数自动转成元组·
+39.抽象teacher force 用 decoder
+40.beam_search 移除EOS 
+41.decode函数，生成decoder_input  输入 ctx_idx src_idx 输出 tgt_idx
 
 下一步
-36.添加组件后太慢，一定几率使用context_encoder,share_encoder。有可能不收敛，开始不要加。之后概率逐渐加大。
-37.简化了装载模型步骤，下一步抽象 【失败】 不知为何 初始化对象的参数自动转成元组·
-38.beam_search 移除EOS 
-
-teacher force
-输入 ctx_idx src_idx 输出 tgt_idx
 检验序列长短影响
 
 为抑制环境影响:   残差->门控制  还是末尾们控制.原文用线性门,还要变形.
-似乎用底层encoder自注意力+高层外注意力
 
-模型构建
+似乎用底层encoder自注意力+高层外注意力
 encoder+多头 +上层分开
 ctx+src+tgt 每层分开
+使用不同随机性
 
 下两步
 样本级别权重
