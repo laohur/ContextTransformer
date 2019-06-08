@@ -10,7 +10,7 @@ import transformer.Constants as Constants
 from transformer.Translator import Translator
 from dataset import collate_fn
 import random
-
+import traceback
 
 def train(model, training_data, validation_data, optimizer, args):
     ''' 开始训练'''
@@ -98,15 +98,15 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
         ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
 
         # if teacher force
-        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.00:  # 每个批次反向传播，不能发散了
             print("  ----->teacher force decoding...")
             try:  #有可能张量长度不一样，丢弃。
                 tmp_tgt_seq, tmp_tgt_pos = decode(model, src_seq=src_seq[:3], src_pos=src_pos[:3], ctx_seq=ctx_seq[:3],
                                                   ctx_pos=ctx_pos[:3], args=args)
                 tgt_seq[:3] = tmp_tgt_seq
                 tgt_pos[:3] = tmp_tgt_pos
-            except Exception:
-                print(Exception)
+            except Exception as e:
+                traceback.print_exc(e)
 
         gold = tgt_seq[:, 1:]
 

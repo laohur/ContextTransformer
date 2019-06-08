@@ -17,7 +17,7 @@ def main():
     dir = "../data/jd/big"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=64)
+    parser.add_argument('-batch_size', type=int, default=128)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
@@ -46,14 +46,14 @@ def main():
     args.max_word_seq_len = reader['settings']["max_word_seq_len"]
 
     print("加载训练数据")
-    # begin, end = 0, sys.maxsize
-    begin, end = 0, 10000
+    begin, end = 0, sys.maxsize
+    # begin, end = 0, 10000
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
     train_src, train_ctx, train_tgt = digitalize(src=train_src, tgt=train_tgt, ctx=train_ctx,
                                                  max_sent_len=args.max_token_seq_len - 2,
-                                                 word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=3)
+                                                 word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
 
     training_data = torch.utils.data.DataLoader(
         SeqDataset(
