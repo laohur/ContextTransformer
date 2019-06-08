@@ -14,10 +14,10 @@ from Util import *
 
 def main():
     parser = argparse.ArgumentParser(description='main_train.py')
-    dir = "../data/jd/big"
+    dir = "../data/jd/middle"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=128)
+    parser.add_argument('-batch_size', type=int, default=32)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
@@ -45,7 +45,28 @@ def main():
     args.max_token_seq_len = reader['settings']["max_token_seq_len"]
     args.max_word_seq_len = reader['settings']["max_word_seq_len"]
 
-    print("加载训练数据")
+    print("加载验证集数据")
+    valid_src = read_file(path=args.data_dir + "/valid_src.txt")
+    valid_tgt = read_file(path=args.data_dir + "/valid_tgt.txt")
+    valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
+    valid_src, valid_ctx, valid_tgt = digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx,
+                                                 max_sent_len=args.max_token_seq_len - 2,
+                                                 word2idx=reader['dict']['src'],
+                                                 index2freq=None, topk=0)
+    # training_data, validation_data = prepare_dataloaders(reader, data, args)
+    validation_data = torch.utils.data.DataLoader(
+        SeqDataset(
+            src_word2idx=reader['dict']['src'],
+            tgt_word2idx=reader['dict']['tgt'],
+            ctx_word2idx=reader['dict']['ctx'],
+            src_insts=valid_src,
+            tgt_insts=valid_tgt,
+            ctx_insts=valid_ctx),
+        num_workers=4,
+        batch_size=args.batch_size,
+        collate_fn=tri_collate_fn)
+
+    print("加载训练集数据")
     begin, end = 0, sys.maxsize
     # begin, end = 0, 10000
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
@@ -67,26 +88,6 @@ def main():
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn,
         shuffle=True)
-
-    valid_src = read_file(path=args.data_dir + "/valid_src.txt")
-    valid_tgt = read_file(path=args.data_dir + "/valid_tgt.txt")
-    valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
-    valid_src, valid_ctx, valid_tgt = digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx,
-                                                 max_sent_len=args.max_token_seq_len - 2,
-                                                 word2idx=reader['dict']['src'],
-                                                 index2freq=None, topk=0)
-    # training_data, validation_data = prepare_dataloaders(reader, data, args)
-    validation_data = torch.utils.data.DataLoader(
-        SeqDataset(
-            src_word2idx=reader['dict']['src'],
-            tgt_word2idx=reader['dict']['tgt'],
-            ctx_word2idx=reader['dict']['ctx'],
-            src_insts=valid_src,
-            tgt_insts=valid_tgt,
-            ctx_insts=valid_ctx),
-        num_workers=4,
-        batch_size=args.batch_size,
-        collate_fn=tri_collate_fn)
 
     args.src_vocab_size = training_data.dataset.src_vocab_size
     args.tgt_vocab_size = training_data.dataset.tgt_vocab_size
