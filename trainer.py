@@ -73,15 +73,15 @@ def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args):
     tgt_seq = []
     all_hyp, all_scores = translator.translate_batch(src_seq, src_pos, ctx_seq, ctx_pos)
     for idx_seqs in all_hyp:  # batch
-        idx_seq = idx_seqs[0] # n_best=1
+        idx_seq = idx_seqs[0]  # n_best=1
         end_pos = len(idx_seq)
         for i in range(len(idx_seq)):
             if idx_seq[i] == Constants.EOS:
                 end_pos = i
                 break
-        tgt_seq.append(idx_seq[:end_pos][:args.max_word_seq_len])
+        tgt_seq.append([Constants.BOS] + idx_seq[:end_pos][:args.max_word_seq_len] + [Constants.EOS])
     batch_seq, batch_pos = collate_fn(tgt_seq)
-    return batch_seq, batch_pos
+    return batch_seq.to(args.device), batch_pos.to(args.device)
 
 
 def train_epoch(model, training_data, optimizer, args, smoothing):
@@ -98,10 +98,16 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
         ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
 
         # if teacher force
-        if random.random() < 0.05:
-            tgt_seq, tgt_pos = decode(model, src_seq=src_seq, src_pos=src_pos, ctx_seq=ctx_seq, ctx_pos=ctx_pos,
-                                      args=args)
-        tgt_seq, tgt_pos = tgt_seq.to(args.device), tgt_pos.to(args.device)
+        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
+            print("  ----->teacher force decoding...")
+            try:  #有可能张量长度不一样，丢弃。
+                tmp_tgt_seq, tmp_tgt_pos = decode(model, src_seq=src_seq[:3], src_pos=src_pos[:3], ctx_seq=ctx_seq[:3],
+                                                  ctx_pos=ctx_pos[:3], args=args)
+                tgt_seq[:3] = tmp_tgt_seq
+                tgt_pos[:3] = tmp_tgt_pos
+            except Exception:
+                print(Exception)
+
         gold = tgt_seq[:, 1:]
 
         # forward

@@ -15,17 +15,17 @@ from transformer.Models import ContextTransformer
 def main():
     # test_path="../data/tb/test_src.txt"
     # test_path = "../data/qa_data/test_src.txt"
-    data_dir = "../data/jd/data"
+    data_dir = "../data/jd/big"
     parser = argparse.ArgumentParser(description='main_test.py')
     parser.add_argument('-model_path', default="log/model.ckpt", help='模型路径')
     parser.add_argument('-data_dir', default=data_dir, help='模型路径')
     parser.add_argument('-src', default=data_dir + "/test_src.txt", help='测试集源文件路径')
     parser.add_argument('-data', default=data_dir + "/reader.data", help='训练数据')
     parser.add_argument('-output_dir', default="output", help="输出路径")
-    parser.add_argument('-beam_size', type=int, default=5, help='Beam size')
-    parser.add_argument('-batch_size', type=int, default=32, help='Batch size')
+    parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
+    parser.add_argument('-batch_size', type=int, default=256, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
-    parser.add_argument('-device', action='store_true', default=device)
+    parser.add_argument('-device', action='store_true', default="cuda")
 
     args = parser.parse_args()
     if not os.path.exists(args.output_dir):

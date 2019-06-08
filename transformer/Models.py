@@ -218,21 +218,21 @@ class ContextTransformer(nn.Module):
             # Share the weight matrix between source & target word embeddings
             assert n_ctx_vocab == n_src_vocab == n_tgt_vocab, \
                 "To share word embedding table, the vocabulary size of src/tgt shall be the same."
-            self.src_encoder.src_word_emb.weight = self.tgt_decoder.tgt_word_emb.weight
-        self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight
+            self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight = self.tgt_decoder.tgt_word_emb.weight
+            # self.ctx_encoder.ctx_word_emb = self.src_encoder.src_word_emb = self.tgt_decoder.tgt_word_emb
 
-        #weight会变吗
+        # weight会变吗
 
     def forward(self, src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos):
         tgt_seq, tgt_pos = tgt_seq[:, :-1], tgt_pos[:, :-1]
         ctx_output = None
-        if random.random() < 0.2:
+        if random.random() < 0.1:
             ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
-        encoder = self.encoder if random.random() < 0.1 else None
+        encoder = self.encoder if random.random() < 0.01 else None
         src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=encoder)  # batch*src_seq*512
 
-        encoder = self.encoder if random.random() < 0.1 else None
+        encoder = self.encoder if random.random() < 0.01 else None
         tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=encoder)
 
         seq_logit = self.tgt_word_prj(tgt_output) * self.x_logit_scale

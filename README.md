@@ -91,8 +91,12 @@ tgt+ctx多头+src多头
 39.抽象teacher force 用 decoder
 40.beam_search 移除EOS 
 41.decode函数，生成decoder_input  输入 ctx_idx src_idx 输出 tgt_idx
+42.共享权重给改为共用词嵌入层  共享权重有效 共用嵌入层更快，续接有效，初始化无效
+43.整个批次做teacher force可能会带偏，选取三条。
 
 下一步
+实验大数据
+vocab太麻烦，重写
 检验序列长短影响
 
 为抑制环境影响:   残差->门控制  还是末尾们控制.原文用线性门,还要变形.

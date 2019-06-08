@@ -12,6 +12,7 @@ import random
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 def read_file(path, keep_case=False, begin=0, end=-1):
     if end < 0:
         end = sys.maxsize
@@ -142,7 +143,7 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
                 trimmed_tgt_count += 1
         # tgt[i] = [Constants.BOS_WORD] + line2idx(tgt[i], word2idx) + [Constants.EOS_WORD]
         if index2freq != None:
-            if topk == 0 or random.random() < 0.5:
+            if topk == 0 or random.random() < 0.3:
                 tops = np.random.randint(low=4, high=len(word2idx) - 1, size=topk).tolist()
             else:
                 tops = top_words(tgt[i], index2freq)
@@ -214,10 +215,12 @@ def splits_write(x, suffix, dir):  # 此处不能独自洗牌，应该对问答�
 
     with open(dir + "/test" + suffix, "w", encoding="utf-8") as f:
         f.write("\n".join(x[:test_len]))
-    print("测试集已写入")
+    print("测试集已写入", test_len)
     with open(dir + "/valid" + suffix, "w", encoding="utf-8") as f:
         f.write("\n".join(x[test_len:valid_len]))
-    print("验证集已写入")
+    print("验证集已写入", valid_len - test_len)
     with open(dir + "/train" + suffix, "w", encoding="utf-8") as f:
         f.write("\n".join(x[valid_len:]))
+    print("训练集已写入", len(x) - valid_len)
+
     print("训练集、验证集、测试集已写入", os.path.abspath(dir), "目录下")
