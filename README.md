@@ -18,18 +18,19 @@ https://github.com/gsh199449/productqa
 
 ## Quick Start
 * scripts/jdc.py
-分词
+组装数据源
+
+* vocab.py 
+```
+文件分词 生成词汇表
+```
 
 * get_data.py
-产生模型用数据
+ 划分训练集 划分问答背景
 
 * retrive 
 检索答案
 
-* vocab.py 
-```
-生成词汇表
-```
 
 * main_train.py
 ```
@@ -93,10 +94,11 @@ tgt+ctx多头+src多头
 41.decode函数，生成decoder_input  输入 ctx_idx src_idx 输出 tgt_idx
 42.共享权重给改为共用词嵌入层  共享权重有效 共用嵌入层更快，续接有效，初始化无效
 43.整个批次做teacher force可能会带偏，选取三条。
-
+44.vocab太麻烦，重写
+45.数据胜于模型，质量胜于质量。先用5-60长度 30万条精选模型，再用全部。之后加特效。
+短句常是"不会"等一些浅话，很容易预测。
 下一步
 实验大数据
-vocab太麻烦，重写
 检验序列长短影响
 
 为抑制环境影响:   残差->门控制  还是末尾们控制.原文用线性门,还要变形.

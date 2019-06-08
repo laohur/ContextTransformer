@@ -13,6 +13,61 @@ import random
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def char_type(c):  # 判断字符类型
+    # https://gist.github.com/shingchi/64c04e0dd2cbbfbc1350
+    if ord(c) <= 0x007f:  # ascii
+        if ord(c) >= 0x0030 and ord(c) <= 0x0039:
+            return "number"
+        if ord(c) >= 0x0041 and ord(c) <= 0x005a:
+            return "latin"
+        if ord(c) >= 0x0061 and ord(c) <= 0x007a:
+            return "latin"
+        return "ascii_symble"
+    if ord(c) >= 0x4E00 and ord(c) <= 0x9fff:
+        return "han"  # 标准CJK文字
+    if ord(c) >= 0xFF00 and ord(c) <= 0xFFEF:
+        return "han_symble"  # 全角ASCII、全角中英文标点、半宽片假名、半宽平假名、半宽韩文字母：FF00-FFEF
+    if ord(c) >= 0x3000 and ord(c) <= 0x303F:
+        return "han_symble"  # CJK标点符号：3000-303F
+    return "other"
+
+
+def split_lans(line):
+    last_latin = None
+    grams = []
+    for gram in line:  # 还是字符串形式
+        if char_type(gram) == "latin":
+            if last_latin == None or last_latin == False:
+                grams.append(gram)
+            else:
+                grams[-1] += gram
+            last_latin = True
+        else:
+            grams.append(gram)
+            last_latin = False
+    return grams
+
+
+def merge_gram(line):
+    last_type = None
+    tokens = []
+    for gram in line:
+        if char_type(gram) == "latin":
+            if last_type == "latin":
+                tokens[-1] += gram
+            else:
+                tokens.append(gram)
+        elif char_type(gram) == "number":
+            if last_type == "number":
+                tokens[-1] += gram
+            else:
+                tokens.append(gram)
+        else:
+            if gram not in [None, '', ' ']:
+                tokens.append(gram)
+        last_type = char_type(gram)
+    return tokens
+
 def read_file(path, keep_case=False, begin=0, end=-1):
     if end < 0:
         end = sys.maxsize
@@ -207,20 +262,3 @@ def add_keywords(src, tgt, word2index, topk, frequency):  # [2,9,67,4,3,0,0,0]
     return src
 
 
-def splits_write(x, suffix, dir):  # 此处不能独自洗牌，应该对问答对洗牌
-    print("splits_write正在划分训练集", os.path.abspath(dir))
-    test_len, valid_len = 1000, 2000
-    # right = len(x) - test_len
-    # left = right - valid_len
-
-    with open(dir + "/test" + suffix, "w", encoding="utf-8") as f:
-        f.write("\n".join(x[:test_len]))
-    print("测试集已写入", test_len)
-    with open(dir + "/valid" + suffix, "w", encoding="utf-8") as f:
-        f.write("\n".join(x[test_len:valid_len]))
-    print("验证集已写入", valid_len - test_len)
-    with open(dir + "/train" + suffix, "w", encoding="utf-8") as f:
-        f.write("\n".join(x[valid_len:]))
-    print("训练集已写入", len(x) - valid_len)
-
-    print("训练集、验证集、测试集已写入", os.path.abspath(dir), "目录下")

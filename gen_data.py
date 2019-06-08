@@ -3,63 +3,7 @@ import torch
 import os
 from time import time
 import random
-from Util import *
-
-
-def char_type(c):  # 判断字符类型
-    # https://gist.github.com/shingchi/64c04e0dd2cbbfbc1350
-    if ord(c) <= 0x007f:  # ascii
-        if ord(c) >= 0x0030 and ord(c) <= 0x0039:
-            return "number"
-        if ord(c) >= 0x0041 and ord(c) <= 0x005a:
-            return "latin"
-        if ord(c) >= 0x0061 and ord(c) <= 0x007a:
-            return "latin"
-        return "ascii_symble"
-    if ord(c) >= 0x4E00 and ord(c) <= 0x9fff:
-        return "han"  # 标准CJK文字
-    if ord(c) >= 0xFF00 and ord(c) <= 0xFFEF:
-        return "han_symble"  # 全角ASCII、全角中英文标点、半宽片假名、半宽平假名、半宽韩文字母：FF00-FFEF
-    if ord(c) >= 0x3000 and ord(c) <= 0x303F:
-        return "han_symble"  # CJK标点符号：3000-303F
-    return "other"
-
-
-def split_lans(line):
-    last_latin = None
-    grams = []
-    for gram in line:  # 还是字符串形式
-        if char_type(gram) == "latin":
-            if last_latin == None or last_latin == False:
-                grams.append(gram)
-            else:
-                grams[-1] += gram
-            last_latin = True
-        else:
-            grams.append(gram)
-            last_latin = False
-    return grams
-
-
-def merge_gram(line):
-    last_type = None
-    tokens = []
-    for gram in line:
-        if char_type(gram) == "latin":
-            if last_type == "latin":
-                tokens[-1] += gram
-            else:
-                tokens.append(gram)
-        elif char_type(gram) == "number":
-            if last_type == "number":
-                tokens[-1] += gram
-            else:
-                tokens.append(gram)
-        else:
-            if gram not in [None, '', ' ']:
-                tokens.append(gram)
-        last_type = char_type(gram)
-    return tokens
+from Util import merge_gram
 
 
 def tokenize(line):
@@ -68,14 +12,14 @@ def tokenize(line):
     # words = line.split()
     # line = ''.join(line.split(" "))
     # words = split_lans(line)
-    words = merge_gram(line)
+    # words = merge_gram(line)
     # line = ' '.join(words)
-    # words = line.split(" ")
+    words = line.split(" ")
     re = []
     for word in words:
         if len(word) > 9:  # "13653923571"空值
             continue
-        if word in [None, "", " "]:
+        if word in [None, "", " ", "\t"]:
             continue
         re.append(word[:9])
     return re
@@ -111,9 +55,9 @@ def get_jdpair(row):
     answer = sents[5].strip()
     attr = sents[1].strip()
 
-    question = " ".join(tokenize(question))
-    answer = " ".join(tokenize(answer))
-    attr = " ".join(tokenize(attr))
+    question = tokenize(question)
+    answer = tokenize(answer)
+    attr = tokenize(attr)
 
     # if len(question) < 1 or len(answer) < 1:
     #     print("get_pair字太少", row)
@@ -163,27 +107,25 @@ def read(path, begin=0, end=-1):
         question, answer, attr = None, None, None
         try:
             question, answer, attr = get_jdpair(row)
-        except Exception:
-            print(Exception)
+        except Exception as e:
+            print(e)
+            continue
         valid = True
         for item in [question, answer, attr]:
-            # if item in [None, "", " "] or len(item) < 1 or len(item) > 80:
-            if item in [None, "", " "] or len(item) < 1:
+            if item in [None, "", " "] or len(item) < 5 or len(item) > 40:
                 valid = False
                 break
         if not valid:
             continue
-
-        # if question == None or answer == None or attr == None:
+        # if len(item) < 5 or len(item) > 60:
         #     continue
-        # if len(question)<10 or len(attr)<10 or len(answer)<10
 
         qlenth += len(question)
         alenth += len(answer)
         tlenth += len(attr)
-        questions.append(question)
-        answers.append(answer)
-        attrs.append(attr)
+        questions.append(' '.join(question))
+        answers.append(' '.join(answer))
+        attrs.append(' '.join(attr))
 
         if i % 100000 == 0:
             print(question, "--->", answer, "<---", attr)
@@ -193,6 +135,25 @@ def read(path, begin=0, end=-1):
     print(str(path) + "总计", len(doc), "行，有效问答有" + str(len(answers)))
     print(time() - t0, "秒处理", len(answers), "条")
     return questions, answers, attrs
+
+
+def splits_write(x, suffix, dir):  # 此处不能独自洗牌，应该对问答对洗牌
+    print("splits_write正在划分训练集", os.path.abspath(dir))
+    test_len, valid_len = 1000, 2000
+    # right = len(x) - test_len
+    # left = right - valid_len
+
+    with open(dir + "/test" + suffix, "w", encoding="utf-8") as f:
+        f.write("\n".join(x[:test_len]))
+    print("测试集已写入", test_len)
+    with open(dir + "/valid" + suffix, "w", encoding="utf-8") as f:
+        f.write("\n".join(x[test_len:valid_len]))
+    print("验证集已写入", valid_len - test_len)
+    with open(dir + "/train" + suffix, "w", encoding="utf-8") as f:
+        f.write("\n".join(x[valid_len:]))
+    print("训练集已写入", len(x) - valid_len)
+
+    print("训练集、验证集、测试集已写入", os.path.abspath(dir), "目录下")
 
 
 def split_test(path, mydir):
@@ -229,9 +190,10 @@ def main():
     # source = "balance.txt"
 
     dir = "../data/jd"
-    source = "full.skuqa"
+    source = "tokenized.skuqa"
 
-    mydir = "../data/jd/big"
+    # mydir = "../data/jd/big"
+    mydir = "../data/jd/middle"
     # split_test(dir + "/" + source, mydir)
 
     names = ["test", "valid", "train"]
@@ -340,4 +302,54 @@ read正在读取 D:\code\data\jd\big\train.txt
  已写入 D:\code\data\jd\big\train_attr.txt
 286.9999632835388 秒执行完main()
     
+runfile('D:/code/ContextTransformer/gen_data.py', wdir='D:/code/ContextTransformer')
+read正在读取 D:\code\data\jd\middle\test.txt
+0.004985809326171875 秒读出 1000 条
+进展 0.0 读取第 0 行，选取 0
+../data/jd/middle/test.txt总计 1000 行，有效问答有238
+0.023935794830322266 秒处理 238 条
+ 已写入 D:\code\data\jd\middle\test_src.txt
+ 已写入 D:\code\data\jd\middle\test_tgt.txt
+ 已写入 D:\code\data\jd\middle\test_attr.txt
+read正在读取 D:\code\data\jd\middle\valid.txt
+0.006981611251831055 秒读出 1000 条
+进展 0.0 读取第 0 行，选取 0
+../data/jd/middle/valid.txt总计 1000 行，有效问答有205
+0.02692699432373047 秒处理 205 条
+ 已写入 D:\code\data\jd\middle\valid_src.txt
+ 已写入 D:\code\data\jd\middle\valid_tgt.txt
+ 已写入 D:\code\data\jd\middle\valid_attr.txt
+read正在读取 D:\code\data\jd\middle\train.txt
+8.623963594436646 秒读出 1682340 条
+进展 0.0 读取第 0 行，选取 0
+进展 5.944101667914928 读取第 100000 行，选取 21350
+进展 11.888203335829855 读取第 200000 行，选取 42837
+进展 17.832305003744786 读取第 300000 行，选取 64383
+进展 23.77640667165971 读取第 400000 行，选取 85971
+进展 29.72050833957464 读取第 500000 行，选取 107391
+进展 35.66461000748957 读取第 600000 行，选取 129008
+进展 41.60871167540449 读取第 700000 行，选取 150557
+进展 47.55281334331942 读取第 800000 行，选取 172003
+['日', '期', '不', '会', '自', '己', '跳', '，', '怎', '么', '搞'] ---> ['要', '先', '调', '到', '前', '一', '天', '再', '转', '时', '针', '到', '第', '二', '天', '的', '日', '期', '，', '最', '好', '上', '午', '调', '，', '要', '不', '然', '下', '午', '调', '要', '多', '转', '12', '圈'] <--- ['卡', '西', '欧', '（', 'casio', '）', '手', '表', 'edifice', '经', '典', '三', '盘', '六', '指', '针', '商', '务', '男', '表', '石', '英', '表', 'efr', '-', '526', 'd', '-', '1', 'a', '日', '韩', '表', '腕', '表', '钟', '表']
+平均问题长 13.04591753680147 平均回答长 13.179501639496756 平均详情长 34.11732285295691
+进展 53.49691501123435 读取第 900000 行，选取 193679
+['刮', '腿', '毛', '效', '果', '好', '吧', '？'] ---> ['你', '可', '以', '试', '试', '！'] <--- ['云', '蕾', '多', '功', '能', '刮', '皮', '刀', '瓜', '果', '刀', '果', '蔬', '削', '皮', '器', '去', '皮', '器', '削', '皮', '刀', '21577', '厨', '房', 'diy', '/', '小', '工', '具', '厨', '房', '配', '件', '厨', '具']
+平均问题长 13.037783973564643 平均回答长 13.181634655101197 平均详情长 34.12492255266419
+进展 59.44101667914928 读取第 1000000 行，选取 214999
+进展 65.3851183470642 读取第 1100000 行，选取 236427
+进展 71.32922001497914 读取第 1200000 行，选取 257760
+进展 77.27332168289406 读取第 1300000 行，选取 279087
+进展 83.21742335080899 读取第 1400000 行，选取 300730
+['6730', '应', '该', '选', '哪', '个', '啊'] ---> ['这', '个', '没', '啥', '问', '题', '，', '我', '用', '的', '99', '&', 'times', ';', '&', 'times', ';', '都', '可', '以', '用'] <--- ['飞', '利', '浦', '（', 'philips', '）', '电', '动', '牙', '刷', '头', '适', '配', 'hx', '6730', 'hx', '6511', 'hx', '6761', 'hx', '3216', 'hx', '6972', '口', '腔', '护', '理', '个', '护', '健', '康', '家', '用', '电', '器']
+平均问题长 13.0408039078113 平均回答长 13.17007225726646 平均详情长 34.124636302875324
+进展 89.16152501872392 读取第 1500000 行，选取 322074
+进展 95.10562668663884 读取第 1600000 行，选取 343408
+['黑', '色', '还', '会', '有', '吗', '？'] ---> ['不', '要', '买', '这', '个', '，', '要', '买', '的', '话', '，', '买', '个', '碎', '屏', '险', '吧'] <--- ['华', '为', 'huawei', 'nova', '4', 'gb', '+', '64', 'gb', '版', '玫', '瑰', '金', '移', '动', '联', '通', '电', '信', '4', 'g', '手', '机', '双', '卡', '双', '待', '手', '机', '手', '机', '通', '讯', '手', '机']
+平均问题长 13.050115168792898 平均回答长 13.166326450384236 平均详情长 34.12330486387951
+../data/jd/middle/train.txt总计 1682340 行，有效问答有361255
+41.60272932052612 秒处理 361255 条
+ 已写入 D:\code\data\jd\middle\train_src.txt
+ 已写入 D:\code\data\jd\middle\train_tgt.txt
+ 已写入 D:\code\data\jd\middle\train_attr.txt
+51.84441375732422 秒执行完main()
     '''
