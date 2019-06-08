@@ -219,14 +219,13 @@ class ContextTransformer(nn.Module):
             assert n_ctx_vocab == n_src_vocab == n_tgt_vocab, \
                 "To share word embedding table, the vocabulary size of src/tgt shall be the same."
             self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight = self.tgt_decoder.tgt_word_emb.weight
-            # self.ctx_encoder.ctx_word_emb = self.src_encoder.src_word_emb = self.tgt_decoder.tgt_word_emb
-
+            # self.ctx_encoder.ctx_word_emb = self.src_encoder.src_word_emb = self.tgt_decoder.tgt_word_emb #无效
         # weight会变吗
 
     def forward(self, src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos):
         tgt_seq, tgt_pos = tgt_seq[:, :-1], tgt_pos[:, :-1]
         ctx_output = None
-        if random.random() < 0.5:
+        if random.random() < 0.0:
             ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
         encoder = self.encoder if random.random() < 0.00 else None

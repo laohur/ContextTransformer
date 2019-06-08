@@ -6,7 +6,6 @@ import argparse
 from tqdm import tqdm
 from dataset import SeqDataset, paired_collate_fn, tri_collate_fn
 from transformer.Translator import Translator
-from vocab import load_file, convert_w2id_seq
 import json
 from Util import *
 from transformer.Models import ContextTransformer
@@ -15,7 +14,7 @@ from transformer.Models import ContextTransformer
 def main():
     # test_path="../data/tb/test_src.txt"
     # test_path = "../data/qa_data/test_src.txt"
-    data_dir = "../data/jd/big"
+    data_dir = "../data/jd/middle"
     parser = argparse.ArgumentParser(description='main_test.py')
     parser.add_argument('-model_path', default="log/model.ckpt", help='模型路径')
     parser.add_argument('-data_dir', default=data_dir, help='模型路径')
@@ -23,7 +22,7 @@ def main():
     parser.add_argument('-data', default=data_dir + "/reader.data", help='训练数据')
     parser.add_argument('-output_dir', default="output", help="输出路径")
     parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
-    parser.add_argument('-batch_size', type=int, default=256, help='Batch size')
+    parser.add_argument('-batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
     parser.add_argument('-device', action='store_true', default="cuda")
 
@@ -91,7 +90,7 @@ def main():
 
     path = args.output_dir + '/test_out.txt'
     with open(path, 'w', encoding="utf-8") as f:
-        for batch in tqdm(test_loader, mininterval=2, desc='  - (Test)', leave=False):
+        for batch in tqdm(test_loader, mininterval=0.1, desc='  - (Test)', leave=False):
             all_hyp, all_scores = translator.translate_batch(*batch)
             for idx_seqs in all_hyp:  # batch
                 answers = []
