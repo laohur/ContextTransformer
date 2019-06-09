@@ -97,11 +97,11 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
     for batch in tqdm(training_data, mininterval=2, desc='  - (训练)   ', leave=False):
         # prepare data
         ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
+        gold = tgt_seq[:, 1:]  #真正的目标
 
         error = False
         # if teacher force
         if random.random() < 0.01:  # 每个批次反向传播，不能发散了
-            print("  ----->teacher force decoding...")
             start = random.randint(0, src_pos.shape[0] - 1)
             try:  # 有可能张量长度不一样，丢弃。
                 tmp_tgt_seq, tmp_tgt_pos = \
@@ -109,13 +109,13 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
                            ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args)
                 tgt_seq[start:start + 3] = tmp_tgt_seq
                 tgt_pos[start:start + 3] = tmp_tgt_pos
+                print("  ----->teacher force decoding...")
             except Exception as e:
                 error = True
                 traceback.print_exc(e)
         if error:
             continue
 
-        gold = tgt_seq[:, 1:]
 
         # forward
         optimizer.zero_grad()

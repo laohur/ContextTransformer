@@ -178,7 +178,7 @@ class ContextTransformer(nn.Module):
     def __init__(
             self,
             n_ctx_vocab, n_src_vocab, n_tgt_vocab, len_max_seq,
-            d_word_vec=512, d_model=512, d_inner=2048, en_layers=2,
+            d_word_vec=512, d_model=512, d_inner=2048, en_layers=3,
             n_layers=6, n_head=8, d_k=64, d_v=64, dropout=0.1,
             tgt_emb_prj_weight_sharing=True, emb_src_tgt_weight_sharing=True):
 
@@ -188,8 +188,8 @@ class ContextTransformer(nn.Module):
             n_ctx_vocab=n_ctx_vocab, len_max_seq=len_max_seq,
             d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
             n_layers=en_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout)
-        self.encoder = self.ctx_encoder
-        # self.encoder = None
+        # self.encoder = self.ctx_encoder
+        self.encoder = None
         self.src_encoder = SourceEncoder(
             n_src_vocab=n_src_vocab, len_max_seq=len_max_seq,
             d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
@@ -224,15 +224,15 @@ class ContextTransformer(nn.Module):
 
     def forward(self, src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos):
         tgt_seq, tgt_pos = tgt_seq[:, :-1], tgt_pos[:, :-1]
-        ctx_output = None
-        if random.random() < 0.01:
-            ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
+        # ctx_output = None
+        # if random.random() < 0.01:
+        ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
-        encoder = self.encoder if random.random() < 0.01 else None
-        src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=encoder)  # batch*src_seq*512
+        # encoder = self.encoder if random.random() < 0.01 else None
+        src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=self.encoder)  # batch*src_seq*512
 
-        encoder = self.encoder if random.random() < 0.01 else None
-        tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=encoder)
+        # encoder = self.encoder if random.random() < 0.01 else None
+        tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=self.encoder)
 
         seq_logit = self.tgt_word_prj(tgt_output) * self.x_logit_scale
 

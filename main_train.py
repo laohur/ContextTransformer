@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
-    parser.add_argument('-en_layers', type=int, default=0)
+    parser.add_argument('-en_layers', type=int, default=3)
     parser.add_argument('-n_layers', type=int, default=6)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
