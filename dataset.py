@@ -103,10 +103,10 @@ def paired_collate_fn(insts):
     return (*src_insts, *ctx_insts)
 
 
-def collate_fn(insts):
+def collate_fn(insts, max_len=None):
     ''' collate校对  批补齐填充'''
-
-    max_len = max(len(inst) for inst in insts)
+    if max_len == None:
+        max_len = max(len(inst) for inst in insts)
 
     batch_seq = np.array([
         inst + [Constants.PAD] * (max_len - len(inst))

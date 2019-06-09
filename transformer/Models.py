@@ -225,13 +225,13 @@ class ContextTransformer(nn.Module):
     def forward(self, src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos):
         tgt_seq, tgt_pos = tgt_seq[:, :-1], tgt_pos[:, :-1]
         ctx_output = None
-        if random.random() < 0.5:
+        if random.random() < 0.01:
             ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
-        encoder = self.encoder if random.random() < 0.0 else None
+        encoder = self.encoder if random.random() < 0.01 else None
         src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=encoder)  # batch*src_seq*512
 
-        encoder = self.encoder if random.random() < 0.0 else None
+        encoder = self.encoder if random.random() < 0.01 else None
         tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=encoder)
 
         seq_logit = self.tgt_word_prj(tgt_output) * self.x_logit_scale

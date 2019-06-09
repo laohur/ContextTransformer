@@ -12,6 +12,7 @@ from dataset import collate_fn
 import random
 import traceback
 
+
 def train(model, training_data, validation_data, optimizer, args):
     ''' 开始训练'''
     log_train_file = args.log + '/train.log'
@@ -80,7 +81,7 @@ def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args):
                 end_pos = i
                 break
         tgt_seq.append([Constants.BOS] + idx_seq[:end_pos][:args.max_word_seq_len] + [Constants.EOS])
-    batch_seq, batch_pos = collate_fn(tgt_seq)
+    batch_seq, batch_pos = collate_fn(tgt_seq,max_len=args.max_token_seq_len)
     return batch_seq.to(args.device), batch_pos.to(args.device)
 
 
@@ -97,16 +98,22 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
         # prepare data
         ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
 
+        error = False
         # if teacher force
-        if random.random() < 0.00:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
             print("  ----->teacher force decoding...")
-            try:  #有可能张量长度不一样，丢弃。
-                tmp_tgt_seq, tmp_tgt_pos = decode(model, src_seq=src_seq[:3], src_pos=src_pos[:3], ctx_seq=ctx_seq[:3],
-                                                  ctx_pos=ctx_pos[:3], args=args)
-                tgt_seq[:3] = tmp_tgt_seq
-                tgt_pos[:3] = tmp_tgt_pos
+            start = random.randint(0, src_pos.shape[0] - 1)
+            try:  # 有可能张量长度不一样，丢弃。
+                tmp_tgt_seq, tmp_tgt_pos = \
+                    decode(model, src_seq=src_seq[start:start + 3], src_pos=src_pos[start:start + 3],
+                           ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args)
+                tgt_seq[start:start + 3] = tmp_tgt_seq
+                tgt_pos[start:start + 3] = tmp_tgt_pos
             except Exception as e:
+                error = True
                 traceback.print_exc(e)
+        if error:
+            continue
 
         gold = tgt_seq[:, 1:]
 
