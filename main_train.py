@@ -17,7 +17,7 @@ def main():
     dir = "../data/jd/middle"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=32)
+    parser.add_argument('-batch_size', type=int, default=128)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
@@ -49,10 +49,9 @@ def main():
     valid_src = read_file(path=args.data_dir + "/valid_src.txt")
     valid_tgt = read_file(path=args.data_dir + "/valid_tgt.txt")
     valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
-    valid_src, valid_ctx, valid_tgt = digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx,
-                                                 max_sent_len=args.max_token_seq_len - 2,
-                                                 word2idx=reader['dict']['src'],
-                                                 index2freq=None, topk=0)
+    valid_src, valid_ctx, valid_tgt = \
+        digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx, max_sent_len=args.max_token_seq_len - 2,
+                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
     # training_data, validation_data = prepare_dataloaders(reader, data, args)
     validation_data = torch.utils.data.DataLoader(
         SeqDataset(
@@ -72,9 +71,9 @@ def main():
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
-    train_src, train_ctx, train_tgt = digitalize(src=train_src, tgt=train_tgt, ctx=train_ctx,
-                                                 max_sent_len=args.max_token_seq_len - 2,
-                                                 word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
+    train_src, train_ctx, train_tgt = \
+        digitalize(src=train_src, tgt=train_tgt, ctx=train_ctx, max_sent_len=args.max_token_seq_len - 2,
+                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=3)
 
     training_data = torch.utils.data.DataLoader(
         SeqDataset(

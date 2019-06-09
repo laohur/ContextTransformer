@@ -68,6 +68,7 @@ def merge_gram(line):
         last_type = char_type(gram)
     return tokens
 
+
 def read_file(path, keep_case=False, begin=0, end=-1):
     if end < 0:
         end = sys.maxsize
@@ -183,7 +184,7 @@ def line2idx(line, word2idx):
 
 def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
     t = 100000
-    trimmed_src_count, trimmed_tgt_count = 0, 0
+    trimmed_src_count, trimmed_tgt_count, trimmed_ctx_count = 0, 0, 0
     for i in range(len(src)):
         if i % t == 0:
             print(i, "条src[i]，进度", i * 1.0 / len(src), src[i], "-->")
@@ -194,7 +195,7 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
             if i % t == 0:
                 print("\t tgt[i] ", "-->", tgt[i])
             tgt[i] = line2idx(tgt[i], word2idx)
-            if len(tgt[i]) < max_sent_len:
+            if len(tgt[i]) > max_sent_len:
                 trimmed_tgt_count += 1
         # tgt[i] = [Constants.BOS_WORD] + line2idx(tgt[i], word2idx) + [Constants.EOS_WORD]
         if index2freq != None:
@@ -203,9 +204,11 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
             else:
                 tops = top_words(tgt[i], index2freq)
                 tops = tops[:topk]
-            src[i] = tops + src[i]
-        if len(src[i]) < max_sent_len:
+            src[i] += tops  # 从末尾加，长句多独特，短句更类似。
+        if len(src[i]) > max_sent_len:
             trimmed_src_count += 1
+        if len(ctx[i]) > max_sent_len:
+            trimmed_ctx_count += 1
         src[i] = [Constants.BOS] + src[i][:max_sent_len] + [Constants.EOS]
         ctx[i] = [Constants.BOS] + ctx[i][:max_sent_len] + [Constants.EOS]
         if i % t == 0:
@@ -215,7 +218,7 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
             tgt[i] = [Constants.BOS] + tgt[i][:max_sent_len] + [Constants.EOS]
             if i % t == 0:
                 print("\t tgt[i] ", "-->", tgt[i])
-    print(trimmed_src_count, "条问题过长被截断", trimmed_tgt_count, "条回答过长被截断至", max_sent_len, "\n")
+    print(trimmed_src_count, "条问题", trimmed_tgt_count, "条回答", trimmed_ctx_count, "条背景被截断至", max_sent_len)
 
     return src, ctx, tgt
 
@@ -260,5 +263,3 @@ def add_keywords(src, tgt, word2index, topk, frequency):  # [2,9,67,4,3,0,0,0]
 
         src[i][1:1] = tops
     return src
-
-

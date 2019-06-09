@@ -22,7 +22,7 @@ def main():
     parser.add_argument('-data', default=data_dir + "/reader.data", help='训练数据')
     parser.add_argument('-output_dir', default="output", help="输出路径")
     parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
-    parser.add_argument('-batch_size', type=int, default=64, help='Batch size')
+    parser.add_argument('-batch_size', type=int, default=32, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
     parser.add_argument('-device', action='store_true', default="cuda")
 
