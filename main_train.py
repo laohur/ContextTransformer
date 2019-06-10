@@ -18,14 +18,14 @@ def main():
     # dir = "../data/jd/big"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=128)
+    parser.add_argument('-batch_size', type=int, default=64)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
-    parser.add_argument('-en_layers', type=int, default=3)
+    parser.add_argument('-en_layers', type=int, default=1)
     parser.add_argument('-n_layers', type=int, default=6)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
@@ -60,8 +60,9 @@ def main():
             tgt_word2idx=reader['dict']['tgt'],
             ctx_word2idx=reader['dict']['ctx'],
             src_insts=valid_src,
-            tgt_insts=valid_tgt,
-            ctx_insts=valid_ctx),
+            ctx_insts=valid_ctx,
+            tgt_insts=valid_tgt
+            ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn)
@@ -82,8 +83,9 @@ def main():
             tgt_word2idx=reader['dict']['tgt'],
             ctx_word2idx=reader['dict']['ctx'],
             src_insts=train_src,
-            tgt_insts=train_tgt,
-            ctx_insts=train_ctx),
+            ctx_insts=train_ctx,
+            tgt_insts=train_tgt
+            ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn,
@@ -92,6 +94,7 @@ def main():
     args.src_vocab_size = training_data.dataset.src_vocab_size
     args.tgt_vocab_size = training_data.dataset.tgt_vocab_size
     args.ctx_vocab_size = training_data.dataset.ctx_vocab_size
+    args.idx2word = {idx: word for word, idx in reader['dict']['src'].items()}
 
     print("---准备模型---")
     if args.embs_share_weight:

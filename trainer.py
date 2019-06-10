@@ -34,7 +34,7 @@ def train(model, training_data, validation_data, optimizer, args):
             ppl=math.exp(min(train_loss, 100)), accu=100 * train_accu, time=(time.time() - start)))
 
         start = time.time()
-        valid_loss, valid_accu = eval_epoch(model, validation_data, args.device)
+        valid_loss, valid_accu = eval_epoch(model, validation_data, args)
         print('  - (验证集) ppl: {ppl: 8.5f}, accuracy: {accu:3.3f} %, time: {time:3.3f}秒'.format(
             ppl=math.exp(min(valid_loss, 100)), accu=100 * valid_accu,
             time=(time.time() - start)))
@@ -81,7 +81,7 @@ def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args):
                 end_pos = i
                 break
         tgt_seq.append([Constants.BOS] + idx_seq[:end_pos][:args.max_word_seq_len] + [Constants.EOS])
-    batch_seq, batch_pos = collate_fn(tgt_seq,max_len=args.max_token_seq_len)
+    batch_seq, batch_pos = collate_fn(tgt_seq, max_len=args.max_token_seq_len)
     return batch_seq.to(args.device), batch_pos.to(args.device)
 
 
@@ -96,26 +96,32 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
     for batch in tqdm(training_data, mininterval=2, desc='  - (训练)   ', leave=False):
         # prepare data
-        ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
-        gold = tgt_seq[:, 1:]  #真正的目标
+        src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
+        gold = tgt_seq[:, 1:]  # 真正的目标
 
         error = False
         # if teacher force
-        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
-            start = random.randint(0, src_pos.shape[0] - 1)
-            try:  # 有可能张量长度不一样，丢弃。
+        if random.random() < 0.1:  # 每个批次反向传播，不能发散了
+            try:  # 有可能张量长度不一样，丢1弃。
+                start = random.randint(0, src_pos.shape[0] - 4)
+                if random.random() < 0.01:
+                    print(" [train] ----->teacher force decoding...")
+                    for i in range(start, start + 3):
+                        ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])
+                        src = ''.join([args.idx2word[idx.item()] for idx in src_seq[i]])
+                        tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[i]])
+                        print("  ---", src, '-->', tgt, "<--", ctx)
+
                 tmp_tgt_seq, tmp_tgt_pos = \
                     decode(model, src_seq=src_seq[start:start + 3], src_pos=src_pos[start:start + 3],
                            ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args)
                 tgt_seq[start:start + 3] = tmp_tgt_seq
                 tgt_pos[start:start + 3] = tmp_tgt_pos
-                print("  ----->teacher force decoding...")
             except Exception as e:
                 error = True
                 traceback.print_exc(e)
         if error:
             continue
-
 
         # forward
         optimizer.zero_grad()
@@ -141,7 +147,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
     return loss_per_word, accuracy
 
 
-def eval_epoch(model, validation_data, device):
+def eval_epoch(model, validation_data, args):
     ''' Epoch 验证 '''
 
     model.eval()
@@ -153,8 +159,16 @@ def eval_epoch(model, validation_data, device):
     with torch.no_grad():
         for batch in tqdm(validation_data, mininterval=2, desc='  - (验证) ', leave=False):
             # prepare data
-            ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos = map(lambda x: x.to(device), batch)
+            src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
             gold = tgt_seq[:, 1:]
+            start = random.randint(0, src_pos.shape[0] - 4)
+            if random.random() < 0.1:
+                print("  [valid]----->teacher force decoding...")
+                for i in range(start, start + 3):
+                    ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])
+                    src = ''.join([args.idx2word[idx.item()] for idx in src_seq[i]])
+                    tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[i]])
+                    print("  ---", src, '-->', tgt, "<--", ctx)
 
             # forward
             pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
