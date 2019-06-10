@@ -68,8 +68,8 @@ def train(model, training_data, validation_data, optimizer, args):
                     ppl=math.exp(min(valid_loss, 100)), accu=100 * valid_accu))
 
 
-def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args):
-    translator = Translator(max_token_seq_len=args.max_token_seq_len, beam_size=5, n_best=1,
+def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args, token_len):
+    translator = Translator(max_token_seq_len=args.max_token_seq_len, beam_size=10, n_best=1,
                             device=args.device, bad_mask=None, model=model)
     tgt_seq = []
     all_hyp, all_scores = translator.translate_batch(src_seq, src_pos, ctx_seq, ctx_pos)
@@ -80,8 +80,9 @@ def decode(model, src_seq, src_pos, ctx_seq, ctx_pos, args):
             if idx_seq[i] == Constants.EOS:
                 end_pos = i
                 break
-        tgt_seq.append([Constants.BOS] + idx_seq[:end_pos][:args.max_word_seq_len] + [Constants.EOS])
-    batch_seq, batch_pos = collate_fn(tgt_seq, max_len=args.max_token_seq_len)
+        # tgt_seq.append([Constants.BOS] + idx_seq[:end_pos][:args.max_word_seq_len] + [Constants.EOS])
+        tgt_seq.append(idx_seq[:end_pos][:args.max_word_seq_len] )
+    batch_seq, batch_pos = collate_fn(tgt_seq, max_len=token_len)
     return batch_seq.to(args.device), batch_pos.to(args.device)
 
 
@@ -101,7 +102,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.1:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.001:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 start = random.randint(0, src_pos.shape[0] - 4)
                 if random.random() < 0.01:
@@ -114,12 +115,16 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
                 tmp_tgt_seq, tmp_tgt_pos = \
                     decode(model, src_seq=src_seq[start:start + 3], src_pos=src_pos[start:start + 3],
-                           ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args)
+                           ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args,
+                           token_len=tgt_seq.shape[1])
+                if tgt_seq.shape[1] != tmp_tgt_seq.shape[1]:
+                    print("tgt_seq.shape, tmp_tgt_seq.shape", tgt_seq.shape, tmp_tgt_seq.shape)
                 tgt_seq[start:start + 3] = tmp_tgt_seq
                 tgt_pos[start:start + 3] = tmp_tgt_pos
             except Exception as e:
                 error = True
                 traceback.print_exc(e)
+                continue
         if error:
             continue
 
@@ -162,7 +167,7 @@ def eval_epoch(model, validation_data, args):
             src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
             gold = tgt_seq[:, 1:]
             start = random.randint(0, src_pos.shape[0] - 4)
-            if random.random() < 0.1:
+            if random.random() < 0.01:
                 print("  [valid]----->teacher force decoding...")
                 for i in range(start, start + 3):
                     ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])

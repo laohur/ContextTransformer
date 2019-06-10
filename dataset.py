@@ -105,12 +105,21 @@ def paired_collate_fn(insts):
 
 def collate_fn(insts, max_len=None):
     ''' collate校对  批补齐填充'''
-    if max_len == None:
-        max_len = max(len(inst) for inst in insts)
+    if max_len != None:  #  teacher用 两头补齐
+        batch_seq = []
+        for inst in insts:
+            inst = [Constants.BOS] + inst[:max_len-2] + [Constants.EOS]
+            inst += [Constants.PAD] * (max_len - len(inst))
+            batch_seq.append(inst)
 
-    batch_seq = np.array([
-        inst + [Constants.PAD] * (max_len - len(inst))
-        for inst in insts])
+        # batch_seq = np.array([
+        #     inst + [Constants.PAD] * (max_len - len(inst))
+        #     for inst in insts])
+    else:
+        max_len = max(len(inst) for inst in insts)
+        batch_seq = np.array([
+            inst + [Constants.PAD] * (max_len - len(inst))
+            for inst in insts])
 
     batch_pos = np.array([
         [pos_i + 1 if w_i != Constants.PAD else 0

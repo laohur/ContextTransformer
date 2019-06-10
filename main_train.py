@@ -18,7 +18,7 @@ def main():
     # dir = "../data/jd/big"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=64)
+    parser.add_argument('-batch_size', type=int, default=8)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
@@ -26,7 +26,7 @@ def main():
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
     parser.add_argument('-en_layers', type=int, default=1)
-    parser.add_argument('-n_layers', type=int, default=6)
+    parser.add_argument('-n_layers', type=int, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
     parser.add_argument('-embs_share_weight', action='store_true', default=True)
@@ -68,8 +68,8 @@ def main():
         collate_fn=tri_collate_fn)
 
     print("加载训练集数据")
-    begin, end = 0, sys.maxsize
-    # begin, end = 0, 10000
+    # begin, end = 0, sys.maxsize
+    begin, end = 0, 10000
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)

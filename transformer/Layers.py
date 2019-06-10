@@ -49,6 +49,7 @@ class SourceLayer(nn.Module):
             src_output, ctx_src_attn = self.ctx_attn(src_output, ctx_output, ctx_output, mask=ctx_src_attn_mask)
             src_output *= non_pad_mask
         else:
+            # print("---src ctx_output == None!")
             ctx_src_attn = None
 
         src_output = self.pos_ffn(src_output)
@@ -76,6 +77,7 @@ class TargetLayer(nn.Module):
             tgt_output, ctx_tgt_attn = self.ctx_attn(tgt_output, ctx_output, ctx_output, mask=ctx_tgt_attn_mask)  # 64*
             tgt_output *= non_pad_mask
         else:
+            # print("---tgt ctx_output == None!")
             ctx_tgt_attn = None
 
         tgt_output, src_tgt_attn = self.src_attn(tgt_output, src_output, src_output, mask=src_tgt_attn_mask)
