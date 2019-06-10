@@ -133,7 +133,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
         pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
         _ = torch.nn.utils.clip_grad_norm_(model.parameters(), 50)
         # backward
-        loss, n_correct = eval_performance(pred, gold, smoothing=smoothing)
+        loss, n_correct = eval_performance(pred, gold, smoothing=smoothing,args=args)
         loss.backward()
 
         # update parameters
@@ -177,7 +177,7 @@ def eval_epoch(model, validation_data, args):
 
             # forward
             pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
-            loss, n_correct = eval_performance(pred, gold, smoothing=False)
+            loss, n_correct = eval_performance(pred, gold, smoothing=False,args=args)
 
             # note keeping
             total_loss += loss.item()

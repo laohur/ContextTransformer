@@ -37,7 +37,7 @@ def main():
     test_src = read_file(path=args.data_dir + "/test_src.txt")
     test_ctx = read_file(path=args.data_dir + "/test_attr.txt")
     test_src, test_ctx, _ = digitalize(src=test_src, tgt=None, ctx=test_ctx, max_sent_len=20,
-                                       word2idx=reader['dict']['src'], index2freq=None, topk=0)
+                                       word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
 
     test_loader = torch.utils.data.DataLoader(
         SeqDataset(

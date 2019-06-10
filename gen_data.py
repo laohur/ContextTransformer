@@ -47,7 +47,7 @@ def get_jdpair(row):
         full_doc = ["skuid \t attributes \t review  \t counter \t question \t answer"]
     '''
     sents = row.split("\t")
-    if len(sents) != 6 or int(sents[3]) < 20:  #去除冷门商品
+    if len(sents) != 6 or int(sents[3]) < 20:  # 去除冷门商品
         return None, None, None
     # question = pure(sents[0].strip())
     # answer = pure(sents[1].strip())
@@ -112,14 +112,15 @@ def read(path, begin=0, end=-1):
             continue
         valid = True
         for item in [question, answer, attr]:
-            if item in [None, "", " "] or len(item) < 5:  # big1 middle5
+            if item in [None, "", " "] or len(item) < 3 or len(item) > 80:  # big1 middle5
                 valid = False
                 break
         if not valid:
             continue
-
-        if len(question) > 30 or len(answer) > 30 or len(attr) > 80:
+        if '不' in answer and random.random() < 0.98:
             continue
+        # if len(question) > 30 or len(answer) > 30 or len(attr) > 80:
+        #     continue
 
         # if len(item) < 5 or len(item) > 60:
         #     continue
@@ -199,11 +200,10 @@ def main(mydir):
     dir = "../data/jd"
     source = "full.skuqa"
 
-
-    split_test(dir + "/" + source, mydir)
+    # split_test(dir + "/" + source, mydir)  #划分训练集
 
     names = ["test", "valid", "train"]
-    marks = ["src", "tgt", "attr"]
+    marks = ["src", "tgt", "attr"]  # 拆分集合文件
     for name in names:
         result = read(mydir + "/" + name + ".txt", begin=0, end=-1)
         for i in range(3):
@@ -212,11 +212,11 @@ def main(mydir):
                 f.write("\n".join(result[i]))
             print(" 已写入", os.path.abspath(path))
 
+
 '''
 big配置  热度不限 句长不限
 middle配置 热度20 句长80
 '''
-
 
 if __name__ == '__main__':
     t0 = time()
@@ -316,64 +316,55 @@ invalid literal for int() with base 10: ' counter '
  已写入 D:\code\data\jd\big\train_attr.txt.untoken
 29.96636176109314 秒执行完main()
 '''
-
 '''
-Python 3.7.3 (default, Mar 27 2019, 17:13:21) [MSC v.1915 64 bit (AMD64)] on win32
-runfile('D:/code/ContextTransformer/gen_data.py', wdir='D:/code/ContextTransformer')
-read正在读取 D:\code\data\jd\full.skuqa
-4.439134836196899 秒读出 1684340 条
-6.021892547607422 秒  1684340 条
-splits_write正在划分训练集 D:\code\data\jd\middle
-测试集已写入 1000
-验证集已写入 1000
-训练集已写入 1682340
-训练集、验证集、测试集已写入 D:\code\data\jd\middle 目录下
 read正在读取 D:\code\data\jd\middle\test.txt
-0.002992391586303711 秒读出 1000 条
+0.003991603851318359 秒读出 1000 条
 进展 0.0 读取第 0 行，选取 0
-../data/jd/middle/test.txt总计 1000 行，有效问答有177
-0.001994609832763672 秒处理 177 条
+../data/jd/middle/test.txt总计 1000 行，有效问答有209
+0.002017498016357422 秒处理 209 条
  已写入 D:\code\data\jd\middle\test_src.txt.untoken
  已写入 D:\code\data\jd\middle\test_tgt.txt.untoken
  已写入 D:\code\data\jd\middle\test_attr.txt.untoken
 read正在读取 D:\code\data\jd\middle\valid.txt
-0.0030281543731689453 秒读出 1000 条
+0.0030226707458496094 秒读出 1000 条
 进展 0.0 读取第 0 行，选取 0
-../data/jd/middle/valid.txt总计 1000 行，有效问答有174
-0.0019936561584472656 秒处理 174 条
+../data/jd/middle/valid.txt总计 1000 行，有效问答有202
+0.001964092254638672 秒处理 202 条
  已写入 D:\code\data\jd\middle\valid_src.txt.untoken
  已写入 D:\code\data\jd\middle\valid_tgt.txt.untoken
  已写入 D:\code\data\jd\middle\valid_attr.txt.untoken
 read正在读取 D:\code\data\jd\middle\train.txt
-5.761622667312622 秒读出 1682340 条
+7.389235019683838 秒读出 1682340 条
 进展 0.0 读取第 0 行，选取 0
-进展 5.944101667914928 读取第 100000 行，选取 17609
+进展 5.944101667914928 读取第 100000 行，选取 19876
+进展 11.888203335829855 读取第 200000 行，选取 39737
+进展 17.832305003744786 读取第 300000 行，选取 59417
+这手机没有人脸解锁吗？ ---> 现在很多手机都有啊，系统自带的，vivox9都有了 <--- vivo X21 全面屏 双摄拍照游戏手机 6GB+128GB 极光白 移动联通电信全网通4G手机 双卡双待手机手机通讯手机
+平均问题长 15.880019522703558 平均回答长 10.781446699653303 平均详情长 55.792049547275234
 invalid literal for int() with base 10: ' counter '
-进展 11.888203335829855 读取第 200000 行，选取 34961
-捷达能用嘛 ---> 不知道，我的是东风锐琪皮卡，刚刚好 <--- 沿途 车载充气床 带头部护档 汽车用后排充气床垫 车震旅行气垫床 家用轿车睡垫 自驾游装备用品 米色 N25车载床安全自驾汽车用品
-平均问题长 13.342085693038156 平均回答长 12.152680052628568 平均详情长 55.80464504318975
-进展 17.832305003744786 读取第 300000 行，选取 52356
-进展 23.77640667165971 读取第 400000 行，选取 69679
-进展 29.72050833957464 读取第 500000 行，选取 87095
-进展 35.66461000748957 读取第 600000 行，选取 104625
-进展 41.60871167540449 读取第 700000 行，选取 122106
-进展 47.55281334331942 读取第 800000 行，选取 139470
-买小米6X好还是荣耀10好 ---> 用了快一个月，比较流畅！就是为了幻彩后盖！觉得不错！ <--- 荣耀10 全面屏AI摄影手机 6GB+128GB 游戏手机 幻影蓝 全网通 移动联通电信4G 双卡双待手机手机通讯手机
-平均问题长 13.364011156441125 平均回答长 12.161072911214518 平均详情长 55.73848326892329
-进展 53.49691501123435 读取第 900000 行，选取 156905
-进展 59.44101667914928 读取第 1000000 行，选取 174622
-进展 65.3851183470642 读取第 1100000 行，选取 192187
-进展 71.32922001497914 读取第 1200000 行，选取 209630
-进展 77.27332168289406 读取第 1300000 行，选取 227212
-买过的朋友们7C好改是7X好呢？ ---> 一分钱一分货小米好 <--- 荣耀 畅玩7X 4GB+64GB 全网通4G全面屏手机 高配版 魅焰红手机手机通讯手机
-平均问题长 13.3515115772425 平均回答长 12.158481248872203 平均详情长 55.723699788304366
-进展 83.21742335080899 读取第 1400000 行，选取 244524
-进展 89.16152501872392 读取第 1500000 行，选取 261838
-进展 95.10562668663884 读取第 1600000 行，选取 279440
-../data/jd/middle/train.txt总计 1682340 行，有效问答有293418
-3.125638723373413 秒处理 293418 条
+进展 23.77640667165971 读取第 400000 行，选取 79524
+进展 29.72050833957464 读取第 500000 行，选取 99364
+进展 35.66461000748957 读取第 600000 行，选取 119158
+进展 41.60871167540449 读取第 700000 行，选取 138984
+进展 47.55281334331942 读取第 800000 行，选取 158940
+进展 53.49691501123435 读取第 900000 行，选取 178720
+进展 59.44101667914928 读取第 1000000 行，选取 198530
+各位，你们笔放置一天掉点是多少，我感觉我这掉电有点多。。 ---> 没事不用的话平板不要开蓝牙就可以了 <--- Apple Pencil 手写笔 MK0C2CH 原装（适用于2018年新款iPad/10.5英寸/12.9英寸iPad Pro）平板电脑电脑整机电脑、办公
+平均问题长 15.851418670132121 平均回答长 10.779288876800097 平均详情长 55.82031521525606
+进展 65.3851183470642 读取第 1100000 行，选取 218329
+进展 71.32922001497914 读取第 1200000 行，选取 238031
+进展 77.27332168289406 读取第 1300000 行，选取 257787
+铜梁什么时候有货 ---> 客服才知道 <--- 小米MIX2S 全面屏游戏手机8GB+256GB 黑色 全网通4G 陶瓷手机手机手机通讯手机
+平均问题长 15.850268437630922 平均回答长 10.771273294334879 平均详情长 55.81398280757832
+进展 83.21742335080899 读取第 1400000 行，选取 277575
+进展 89.16152501872392 读取第 1500000 行，选取 297554
+充电的时候呼吸灯不亮正常吗？ ---> 没有灯 <--- OPPO A1 全面屏拍照手机 3GB+32GB 深海蓝 全网通 移动联通电信4G 双卡双待手机手机手机通讯手机
+平均问题长 15.854702491976273 平均回答长 10.781966359160492 平均详情长 55.801502243282755
+进展 95.10562668663884 读取第 1600000 行，选取 317432
+../data/jd/middle/train.txt总计 1682340 行，有效问答有333650
+4.34537935256958 秒处理 333650 条
  已写入 D:\code\data\jd\middle\train_src.txt.untoken
  已写入 D:\code\data\jd\middle\train_tgt.txt.untoken
  已写入 D:\code\data\jd\middle\train_attr.txt.untoken
-22.770312786102295 秒执行完main()
+14.005540132522583 秒执行完main()
 '''

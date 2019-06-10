@@ -4,18 +4,27 @@
 import torch
 import torch.nn.functional as F
 import transformer.Constants as Constants
+import random
 
 
-def eval_performance(pred, gold, smoothing=False):
+def eval_performance(pred, gold, smoothing=False, args=None):
     ''' 标签平滑'''
 
     loss = cal_loss(pred, gold, smoothing)
 
-    pred = pred.max(1)[1]
-    gold = gold.contiguous().view(-1)
+    pred = pred.max(1)[1] #2688*7196 ->
+    gold = gold.contiguous().view(-1) #128*21 ->2688
     non_pad_mask = gold.ne(Constants.PAD)
     n_correct = pred.eq(gold)
     n_correct = n_correct.masked_select(non_pad_mask).sum().item()
+
+    # start = random.randint(0, gold.shape[0] - 4)
+    if args != None and random.random() < 0.01:
+        print("  [valid]----->teacher force decoding...")
+        # for i in range(start, start + 3):
+        gold = ''.join([args.idx2word[idx.item()] for idx in gold[:20]])
+        pred = ''.join([args.idx2word[idx.item()] for idx in pred[:20]])
+        print("  ---", loss, pred, '--应为-->', gold)
 
     return loss, n_correct
 
