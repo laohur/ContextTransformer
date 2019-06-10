@@ -24,7 +24,7 @@ def eval_performance(pred, gold, smoothing=False, args=None):
         # for i in range(start, start + 3):
         gold = ''.join([args.idx2word[idx.item()] for idx in gold[:20]])
         pred = ''.join([args.idx2word[idx.item()] for idx in pred[:20]])
-        print("  ---", loss, pred, '--应为-->', gold)
+        print("  ---", loss.item(), pred, '--应为-->', gold)
 
     return loss, n_correct
 
