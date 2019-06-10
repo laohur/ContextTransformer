@@ -18,7 +18,7 @@ def main():
     # dir = "../data/jd/big"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=128)
+    parser.add_argument('-batch_size', type=int, default=64)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)

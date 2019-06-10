@@ -56,8 +56,8 @@ def main():
     bads = torch.ones((1, len(reader['dict']['tgt'])))
     for i in bad_idx:
         bads[0][i] = 100  # log(prob)<0  分别观察 0.01  100
-    args.bad_mask = bads
-    # args.bad_mask = None
+    # args.bad_mask = bads
+    args.bad_mask = None
 
     checkpoint = torch.load(args.model_path)
     model_opt = checkpoint['settings']

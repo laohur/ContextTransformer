@@ -232,7 +232,7 @@ class ContextTransformer(nn.Module):
         # encoder = self.encoder if random.random() < 0.01 else None
         src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=self.encoder)  # batch*src_seq*512
 
-        ctx_output = None #解码曾免去
+        # ctx_output = None #解码曾免去
         # encoder = self.encoder if random.random() < 0.01 else None
         tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=self.encoder)
 
