@@ -50,7 +50,7 @@ def main():
         batch_size=args.batch_size,
         collate_fn=paired_collate_fn)
 
-    bad_words = ['您', '建', '猜', '查', '吗', '哪', '了', '问', '么', '&']
+    bad_words = ['您', '建', '猜', '查', '吗', '哪', '了', '问', '么', '&', '？']
     bad_idx = [0, 1, 2, 3] + [reader['dict']['src'][w] for w in bad_words]
     # 最后一个批次不等长
     bads = torch.ones((1, len(reader['dict']['tgt'])))

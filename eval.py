@@ -19,7 +19,7 @@ def eval_performance(pred, gold, smoothing=False, args=None):
     n_correct = n_correct.masked_select(non_pad_mask).sum().item()
 
     # start = random.randint(0, gold.shape[0] - 4)
-    if args != None and random.random() < 0.01:
+    if args != None and random.random() < 0.001:
         print("  [valid]----->teacher force decoding...")
         # for i in range(start, start + 3):
         gold = ''.join([args.idx2word[idx.item()] for idx in gold[:20]])

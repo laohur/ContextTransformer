@@ -105,7 +105,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
         if random.random() < 0.001:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 start = random.randint(0, src_pos.shape[0] - 4)
-                if random.random() < 0.01:
+                if random.random() < 0.1:
                     print(" [train] ----->teacher force decoding...")
                     for i in range(start, start + 3):
                         ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])
