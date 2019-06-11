@@ -67,8 +67,8 @@ def main():
         collate_fn=tri_collate_fn)
 
     print("加载训练集数据")
-    # begin, end = 0, sys.maxsize
-    begin, end = 0, 10000
+    begin, end = 0, sys.maxsize
+    # begin, end = 0, 10000
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
