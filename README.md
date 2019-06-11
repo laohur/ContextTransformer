@@ -14,7 +14,8 @@ gtx 1060 战神笔记本
 
 
 ## Dataset
-https://github.com/gsh199449/productqa
+jd:https://github.com/gsh199449/productqa
+tb:https://github.com/cooelf/DeepUtteranceAggregation
 
 ## Quick Start
 * scripts/jdc.py
@@ -122,9 +123,13 @@ tgt+ctx多头+src多头
 66.1层，解码有ctx。起步10%,5次22%. 这次生成了很多“我”
 67.1+6层，解码有ctx。起步10% v21
 68.6+6层，解码有ctx。起步10% v22
-69.1层，src+ctx,tgt+ctx。0-8,5-18，30-24.v23 比66低很多，下次接着训练。
+69.1层，src+ctx,tgt+ctx。0-8,5-18，30-24.v23 
 70.1层，src-ctx,tgt+ctx。101.txt 0-8,5-19,30-24 v24
-71.1层，src+ctx,tgt-ctx。110.txt 0-8,5-17,11-24 v25 很多“可以、没有”。
+71.1层，src+ctx,tgt-ctx。110.txt 0-8,5-17,11-24 v24 忘了清理模型 生成很多“可以、没有”。
+72.比66低很多，下次接着训练。也可能是小样本干扰大。先移除抽取关键词，忘了tgt-ctx无效。tgt+ctx重新训练，0-8，4-16，10-23.所以抽取关键词是好的。
+73.1+1层，++ctx。学习率x100，5步见顶。
+74.1+6层，++ctx。30万数据集。
+
 
 下一步
 ctx权重过大，可以拼接ctx+src，或者 3self层，ctx层，src层。

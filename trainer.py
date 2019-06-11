@@ -102,7 +102,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.001:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 start = random.randint(0, src_pos.shape[0] - 4)
                 if random.random() < 0.1:
