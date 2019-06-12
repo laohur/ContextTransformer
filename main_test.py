@@ -14,14 +14,14 @@ from transformer.Models import ContextTransformer
 def main():
     # test_path="../data/tb/test_src.txt"
     # test_path = "../data/qa_data/test_src.txt"
-    data_dir = "../data/jd/middle"
+    data_dir = "../data/jd/pure"
     parser = argparse.ArgumentParser(description='main_test.py')
     parser.add_argument('-model_path', default="log/model.ckpt", help='模型路径')
     parser.add_argument('-data_dir', default=data_dir, help='模型路径')
     parser.add_argument('-src', default=data_dir + "/test_src.txt", help='测试集源文件路径')
     parser.add_argument('-data', default=data_dir + "/reader.data", help='训练数据')
     parser.add_argument('-output_dir', default="output", help="输出路径")
-    parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
+    parser.add_argument('-beam_size', type=int, default=20, help='Beam size')
     parser.add_argument('-batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
     parser.add_argument('-device', action='store_true', default="cuda")
@@ -38,6 +38,7 @@ def main():
     test_ctx = read_file(path=args.data_dir + "/test_attr.txt")
     test_src, test_ctx, _ = digitalize(src=test_src, tgt=None, ctx=test_ctx, max_sent_len=20,
                                        word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
+
     test_loader = torch.utils.data.DataLoader(
         SeqDataset(
             src_word2idx=reader['dict']['src'],
@@ -55,8 +56,8 @@ def main():
     bads = torch.ones((1, len(reader['dict']['tgt'])))
     for i in bad_idx:
         bads[0][i] = 100  # log(prob)<0  分别观察 0.01  100
-    args.bad_mask = bads
-    # args.bad_mask = None
+    # args.bad_mask = bads
+    args.bad_mask = None
 
     checkpoint = torch.load(args.model_path)
     model_opt = checkpoint['settings']

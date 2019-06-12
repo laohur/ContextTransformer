@@ -14,8 +14,8 @@ from Util import *
 
 def main():
     parser = argparse.ArgumentParser(description='main_train.py')
-    dir = "../data/jd/middle"
-    # dir = "../data/jd/big"
+    # dir = "../data/jd/middle"
+    dir = "../data/jd/pure"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=10)
     parser.add_argument('-batch_size', type=int, default=128)
@@ -26,7 +26,7 @@ def main():
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
     parser.add_argument('-en_layers', type=int, default=1)
-    parser.add_argument('-n_layers', type=int, default=6)
+    parser.add_argument('-n_layers', type=int, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
     parser.add_argument('-embs_share_weight', action='store_true', default=True)
@@ -53,6 +53,7 @@ def main():
     valid_src, valid_ctx, valid_tgt = \
         digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx, max_sent_len=args.max_token_seq_len - 2,
                    word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
+    # training_data, validation_data = prepare_dataloaders(reader, data, args)
     validation_data = torch.utils.data.DataLoader(
         SeqDataset(
             src_word2idx=reader['dict']['src'],
@@ -61,7 +62,7 @@ def main():
             src_insts=valid_src,
             ctx_insts=valid_ctx,
             tgt_insts=valid_tgt
-        ),
+            ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn)
@@ -84,7 +85,7 @@ def main():
             src_insts=train_src,
             ctx_insts=train_ctx,
             tgt_insts=train_tgt
-        ),
+            ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn,

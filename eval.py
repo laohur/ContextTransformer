@@ -20,11 +20,10 @@ def eval_performance(pred, gold, smoothing=False, args=None):
 
     # start = random.randint(0, gold.shape[0] - 4)
     if args != None and random.random() < 0.001:
-        print("  [valid]----->teacher force decoding...")
         # for i in range(start, start + 3):
         gold = ''.join([args.idx2word[idx.item()] for idx in gold[:20]])
         pred = ''.join([args.idx2word[idx.item()] for idx in pred[:20]])
-        print("  ---", loss.item(), pred, '--应为-->', gold)
+        print("  [eval_performance]---", loss.item(), pred, '--应为-->', gold)
 
     return loss, n_correct
 

@@ -172,12 +172,14 @@ def main(dir):
 
 if __name__ == '__main__':
     t0 = time()
-    mydir = "../data/jd/middle"
-    # mydir = "../data/jd/big"
-    # count_file(mydir)
+    # mydir = "../data/jd/middle"
+    mydir = "../data/jd/pure"
+    count_file(mydir)
     main(mydir)
     print(time() - t0, "秒完成vocab.py")
-'''C:\ProgramData\Anaconda3\python.exe "C:\Program Files\JetBrains\PyCharm Professional Edition with Anaconda plugin 2019.1.2\helpers\pydev\pydevconsole.py" --mode=client --port=51938
+
+'''
+C:\ProgramData\Anaconda3\python.exe "C:\Program Files\JetBrains\PyCharm Professional Edition with Anaconda plugin 2019.1.2\helpers\pydev\pydevconsole.py" --mode=client --port=54353
 import sys; print('Python %s on %s' % (sys.version, sys.platform))
 sys.path.extend(['D:\\code\\ContextTransformer', 'D:/code/ContextTransformer'])
 Python 3.7.3 (default, Mar 27 2019, 17:13:21) [MSC v.1915 64 bit (AMD64)]
@@ -186,66 +188,57 @@ IPython 7.4.0 -- An enhanced Interactive Python. Type '?' for help.
 PyDev console: using IPython 7.4.0
 Python 3.7.3 (default, Mar 27 2019, 17:13:21) [MSC v.1915 64 bit (AMD64)] on win32
 runfile('D:/code/ContextTransformer/vocab.py', wdir='D:/code/ContextTransformer')
-token_file分词 D:\code\data\jd\middle\test_src.txt.untoken 将写入 D:\code\data\jd\middle\test_src.txt
-第一条 衣服是纯棉的么
-../data/jd/middle/test_src.txt.untoken 已全部分词至 ../data/jd/middle/test_src.txt
-token_file分词 D:\code\data\jd\middle\test_tgt.txt.untoken 将写入 D:\code\data\jd\middle\test_tgt.txt
-第一条 是纯棉的
-../data/jd/middle/test_tgt.txt.untoken 已全部分词至 ../data/jd/middle/test_tgt.txt
-token_file分词 D:\code\data\jd\middle\test_attr.txt.untoken 将写入 D:\code\data\jd\middle\test_attr.txt
-../data/jd/middle/test_attr.txt.untoken 不计入词频
-第一条 童亦 0-8个月 初生 婴儿衣服婴儿礼盒 定性枕 抱被 春夏新生儿礼盒套装宝宝用品刚出生满月礼物婴儿礼盒童装母婴
-../data/jd/middle/test_attr.txt.untoken 已全部分词至 ../data/jd/middle/test_attr.txt
-token_file分词 D:\code\data\jd\middle\valid_src.txt.untoken 将写入 D:\code\data\jd\middle\valid_src.txt
-第一条 请问NFC怎么用？周围没人用，帮忙科普一下，谢谢啦。
-../data/jd/middle/valid_src.txt.untoken 已全部分词至 ../data/jd/middle/valid_src.txt
-token_file分词 D:\code\data\jd\middle\valid_tgt.txt.untoken 将写入 D:\code\data\jd\middle\valid_tgt.txt
-第一条 可以当公交卡银行卡使用
-../data/jd/middle/valid_tgt.txt.untoken 已全部分词至 ../data/jd/middle/valid_tgt.txt
-token_file分词 D:\code\data\jd\middle\valid_attr.txt.untoken 将写入 D:\code\data\jd\middle\valid_attr.txt
-../data/jd/middle/valid_attr.txt.untoken 不计入词频
-第一条 小米Note3 美颜双摄拍照手机 6GB+64GB 黑色 全网通4G手机 双卡双待手机手机通讯手机
-../data/jd/middle/valid_attr.txt.untoken 已全部分词至 ../data/jd/middle/valid_attr.txt
-token_file分词 D:\code\data\jd\middle\train_src.txt.untoken 将写入 D:\code\data\jd\middle\train_src.txt
-第一条 呵护是
-第 100000 行 你这种可以把皮肤变白吗？
- ---> 你 这 种 可 以 把 皮 肤 变 白 吗 ？ 
-已统计词频 6508
-第 200000 行 我的华为手机怎么打不开视频
- ---> 我 的 华 为 手 机 怎 么 打 不 开 视 频 
-已统计词频 8110
-第 300000 行 同事推荐我来买修正的，说是老牌子比较好？祛痘印的效果怎么样？
- ---> 同 事 推 荐 我 来 买 修 正 的 ， 说 是 老 牌 子 比 较 好 ？ 祛 痘 印 的 效 果 怎 么 样 ？ 
-已统计词频 9296
-../data/jd/middle/train_src.txt.untoken 已全部分词至 ../data/jd/middle/train_src.txt
-token_file分词 D:\code\data\jd\middle\train_tgt.txt.untoken 将写入 D:\code\data\jd\middle\train_tgt.txt
-第一条 高端的级别吧
-第 100000 行 长期用长期用有效果的！
- ---> 长 期 用 长 期 用 有 效 果 的 ！ 
-已统计词频 10680
-第 200000 行 小米手机自带app
- ---> 小 米 手 机 自 带 app 
-已统计词频 11619
-第 300000 行 有效果
- ---> 有 效 果 
-已统计词频 12370
-../data/jd/middle/train_tgt.txt.untoken 已全部分词至 ../data/jd/middle/train_tgt.txt
-token_file分词 D:\code\data\jd\middle\train_attr.txt.untoken 将写入 D:\code\data\jd\middle\train_attr.txt
-../data/jd/middle/train_attr.txt.untoken 不计入词频
-第一条 伊利奶粉 金领冠珍护系列 幼儿配方奶粉 3段900克（1-3岁幼儿适用）新老包装随机发货婴幼奶粉奶粉母婴
-第 100000 行 【直降50】膜法世家面膜美白去黑头清洁控油补水淡化痘印收缩毛孔水洗绿豆泥浆面膜男女士护肤品面膜面部护肤美妆护肤
- ---> 【 直 降 50 】 膜 法 世 家 面 膜 美 白 去 黑 头 清 洁 控 油 补 水 淡 化 痘 印 收 缩 毛 孔 水 洗 绿 豆 泥 浆 面 膜 男 女 士 护 肤 品 面 膜 面 部 护 肤 美 妆 护 肤 
-第 200000 行 小白智能摄像头云台1080p版无线wifi监控高清智能摄像机室内外家用办公360°红外夜视摄像头支持小米路由器智能家居智能设备数码
- ---> 小 白 智 能 摄 像 头 云 台 1080 p 版 无 线 wifi 监 控 高 清 智 能 摄 像 机 室 内 外 家 用 办 公 360 ° 红 外 夜 视 摄 像 头 支 持 小 米 路 由 器 智 能 家 居 智 能 设 备 数 码 
-第 300000 行 修正积雪草祛痘印淡化膏去痘痘坑痘疤修复凹洞霜产品前女五男士强 一盒 20g乳液/面霜面部护肤美妆护肤
- ---> 修 正 积 雪 草 祛 痘 印 淡 化 膏 去 痘 痘 坑 痘 疤 修 复 凹 洞 霜 产 品 前 女 五 男 士 强 一 盒 20 g 乳 液 / 面 霜 面 部 护 肤 美 妆 护 肤 
-../data/jd/middle/train_attr.txt.untoken 已全部分词至 ../data/jd/middle/train_attr.txt
-词频文件已经写入 ../data/jd/middle/counter.json ../data/jd/middle/counter.bin
-55.69700527191162 秒完成vocab.py
+token_file分词 D:\code\data\jd\pure\test_src.txt.untoken 将写入 D:\code\data\jd\pure\test_src.txt
+第一条 这个是需要充电么？
+../data/jd/pure/test_src.txt.untoken 已全部分词至 ../data/jd/pure/test_src.txt
+token_file分词 D:\code\data\jd\pure\test_tgt.txt.untoken 将写入 D:\code\data\jd\pure\test_tgt.txt
+第一条 当然要冲呀！
+../data/jd/pure/test_tgt.txt.untoken 已全部分词至 ../data/jd/pure/test_tgt.txt
+token_file分词 D:\code\data\jd\pure\test_attr.txt.untoken 将写入 D:\code\data\jd\pure\test_attr.txt
+../data/jd/pure/test_attr.txt.untoken 不计入词频
+第一条 雅诗米 生日礼物女生男生实用送女朋友 毕业创意礼品送老婆爱人闺蜜表白结婚 抖音热门同款维他命榨汁杯 创意礼品礼品礼品箱包
+../data/jd/pure/test_attr.txt.untoken 已全部分词至 ../data/jd/pure/test_attr.txt
+token_file分词 D:\code\data\jd\pure\valid_src.txt.untoken 将写入 D:\code\data\jd\pure\valid_src.txt
+第一条 这个手机黄牛要赚死啊
+../data/jd/pure/valid_src.txt.untoken 已全部分词至 ../data/jd/pure/valid_src.txt
+token_file分词 D:\code\data\jd\pure\valid_tgt.txt.untoken 将写入 D:\code\data\jd\pure\valid_tgt.txt
+第一条 赚多少呢
+../data/jd/pure/valid_tgt.txt.untoken 已全部分词至 ../data/jd/pure/valid_tgt.txt
+token_file分词 D:\code\data\jd\pure\valid_attr.txt.untoken 将写入 D:\code\data\jd\pure\valid_attr.txt
+../data/jd/pure/valid_attr.txt.untoken 不计入词频
+第一条 黑鲨游戏手机 6GB+64GB 极夜黑 液冷更快 全网通4G 双卡双待手机手机通讯手机
+../data/jd/pure/valid_attr.txt.untoken 已全部分词至 ../data/jd/pure/valid_attr.txt
+token_file分词 D:\code\data\jd\pure\train_src.txt.untoken 将写入 D:\code\data\jd\pure\train_src.txt
+第一条 假清真？详情页中根本没出现清真标。
+第 100000 行 能不能将手机游戏投屏上去啊？
+ ---> 能 不 能 将 手 机 游 戏 投 屏 上 去 啊 ？ 
+已统计词频 6523
+第 200000 行 背后信号切口连处，是塑料还是金属
+ ---> 背 后 信 号 切 口 连 处 ， 是 塑 料 还 是 金 属 
+已统计词频 8196
+../data/jd/pure/train_src.txt.untoken 已全部分词至 ../data/jd/pure/train_src.txt
+token_file分词 D:\code\data\jd\pure\train_tgt.txt.untoken 将写入 D:\code\data\jd\pure\train_tgt.txt
+第一条 没必要假
+第 100000 行 当然可以。
+ ---> 当 然 可 以 。 
+已统计词频 10224
+第 200000 行 肯定是塑料啊，不然怎么传输信号
+ ---> 肯 定 是 塑 料 啊 ， 不 然 怎 么 传 输 信 号 
+已统计词频 11083
+../data/jd/pure/train_tgt.txt.untoken 已全部分词至 ../data/jd/pure/train_tgt.txt
+token_file分词 D:\code\data\jd\pure\train_attr.txt.untoken 将写入 D:\code\data\jd\pure\train_attr.txt
+../data/jd/pure/train_attr.txt.untoken 不计入词频
+第一条 伊利 纯牛奶250ml*24盒牛奶乳品饮料冲调食品饮料
+第 100000 行 创维(skyworth) 企鹅极光t2 智能网络电视机顶盒4核16g闪存 高清电视盒子无线wifi网络盒子网络产品电脑、办公
+ ---> 创 维 ( skyworth ) 企 鹅 极 光 t 2 智 能 网 络 电 视 机 顶 盒 4 核 16 g 闪 存 高 清 电 视 盒 子 无 线 wifi 网 络 盒 子 网 络 产 品 电 脑 、 办 公 
+第 200000 行 魅族 魅蓝 e3 全面屏手机  全网通公开版 6gb+64gb 曜石黑 移动联通电信4g手机 双卡双待手机手机通讯手机
+ ---> 魅 族 魅 蓝 e 3 全 面 屏 手 机 全 网 通 公 开 版 6 gb + 64 gb 曜 石 黑 移 动 联 通 电 信 4 g 手 机 双 卡 双 待 手 机 手 机 通 讯 手 机 
+../data/jd/pure/train_attr.txt.untoken 已全部分词至 ../data/jd/pure/train_attr.txt
+词频文件已经写入 ../data/jd/pure/counter.json ../data/jd/pure/counter.bin
+[Info] 原始词库 = 11704
+[Info] 频繁字典大小 = 4297, 最低频数 = 9
+[Info] 忽略罕词数 = 6717 爆表词汇数 -88296
+[Info] 保存词汇到 D:\code\data\jd\pure\reader.json
+[Info] 保存词汇到 D:\code\data\jd\pure\reader.data
+51.52518820762634 秒完成vocab.py
 '''
-'''[Info] 原始词库 = 12613
-[Info] 频繁字典大小 = 4475, 最低频数 = 9
-[Info] 忽略罕词数 = 7233 爆表词汇数 -87387
-[Info] 保存词汇到 D:\code\data\jd\middle\reader.json
-[Info] 保存词汇到 D:\code\data\jd\middle\reader.data
-0.12566924095153809 秒完成vocab.py'''

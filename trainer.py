@@ -102,25 +102,30 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.001:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
-                start = random.randint(0, src_pos.shape[0] - 4)
-                if random.random() < 0.1:
-                    print(" [train] ----->teacher force decoding...")
-                    for i in range(start, start + 3):
-                        ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])
-                        src = ''.join([args.idx2word[idx.item()] for idx in src_seq[i]])
-                        tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[i]])
-                        print("  ---", src, '-->', tgt, "<--", ctx)
+                num=1
+                start = random.randint(0, src_pos.shape[0] - 1-num)
 
                 tmp_tgt_seq, tmp_tgt_pos = \
-                    decode(model, src_seq=src_seq[start:start + 3], src_pos=src_pos[start:start + 3],
-                           ctx_seq=ctx_seq[start:start + 3], ctx_pos=ctx_pos[start:start + 3], args=args,
+                    decode(model, src_seq=src_seq[start:start + num], src_pos=src_pos[start:start + num],
+                           ctx_seq=ctx_seq[start:start + num], ctx_pos=ctx_pos[start:start + num], args=args,
                            token_len=tgt_seq.shape[1])
                 if tgt_seq.shape[1] != tmp_tgt_seq.shape[1]:
                     print("tgt_seq.shape, tmp_tgt_seq.shape", tgt_seq.shape, tmp_tgt_seq.shape)
+
+                if random.random() < 0.1:
+                    for i in range(num):
+                        ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[start+num]])
+                        src = ''.join([args.idx2word[idx.item()] for idx in src_seq[start+num]])
+                        tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[start+num]])
+                        tmp_tgt = ''.join([args.idx2word[idx.item()] for idx in tmp_tgt_seq[num]])
+                        print("  ---[train] teacher force decoding...  src --->", src, " ctx-->", ctx)
+                        print("  tmp_tgt--->", tmp_tgt, " tgt-->", tgt)
+
                 tgt_seq[start:start + 3] = tmp_tgt_seq
                 tgt_pos[start:start + 3] = tmp_tgt_pos
+
             except Exception as e:
                 error = True
                 traceback.print_exc(e)
