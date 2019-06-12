@@ -102,10 +102,10 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.001:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 num=1
-                start = random.randint(0, src_pos.shape[0] - 1-num)
+                start = random.randint(0, src_pos.shape[0] -num)
 
                 tmp_tgt_seq, tmp_tgt_pos = \
                     decode(model, src_seq=src_seq[start:start + num], src_pos=src_pos[start:start + num],
