@@ -117,10 +117,10 @@ def read(path, begin=0, end=-1):
                 break
         if not valid:
             continue
-        if ('不' or '没' in answer) and random.random() < 0.4:
+        if ('不' in answer) and random.random() < 0.4:
             continue
-        # if len(question) > 30 or len(answer) > 30 or len(attr) > 60:
-        #     continue
+        if len(question) > 30 or len(answer) > 30 or len(attr) > 50:
+            continue
 
         # if len(item) < 5 or len(item) > 60:
         #     continue
@@ -200,7 +200,7 @@ def main(mydir):
     dir = "../data/jd"
     source = "full.skuqa"
 
-    # split_test(dir + "/" + source, mydir)  #划分训练集
+    split_test(dir + "/" + source, mydir)  #划分训练集
 
     names = ["test", "valid", "train"]
     marks = ["src", "tgt", "attr"]  # 拆分集合文件
@@ -277,4 +277,5 @@ invalid literal for int() with base 10: ' counter '
  已写入 D:\code\data\jd\pure\train_tgt.txt.untoken
  已写入 D:\code\data\jd\pure\train_attr.txt.untoken
 17.10163140296936 秒执行完main()
+10万
 '''

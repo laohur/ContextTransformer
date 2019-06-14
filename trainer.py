@@ -102,7 +102,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.001:  # 每个批次反向传播，不能发散了
+        if random.random() < 0.01:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 num=1
                 start = random.randint(0, src_pos.shape[0] - 1-num)
@@ -116,15 +116,15 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
                 if random.random() < 0.1:
                     for i in range(num):
-                        ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[start+num]])
-                        src = ''.join([args.idx2word[idx.item()] for idx in src_seq[start+num]])
-                        tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[start+num]])
-                        tmp_tgt = ''.join([args.idx2word[idx.item()] for idx in tmp_tgt_seq[num]])
+                        ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[start+i]])
+                        src = ''.join([args.idx2word[idx.item()] for idx in src_seq[start+i]])
+                        tgt = ''.join([args.idx2word[idx.item()] for idx in tgt_seq[start+i]])
+                        tmp_tgt = ''.join([args.idx2word[idx.item()] for idx in tmp_tgt_seq[i]])
                         print("  ---[train] teacher force decoding...  src --->", src, " ctx-->", ctx)
                         print("  tmp_tgt--->", tmp_tgt, " tgt-->", tgt)
 
-                tgt_seq[start:start + 3] = tmp_tgt_seq
-                tgt_pos[start:start + 3] = tmp_tgt_pos
+                tgt_seq[start:start + num] = tmp_tgt_seq
+                tgt_pos[start:start + num] = tmp_tgt_pos
 
             except Exception as e:
                 error = True

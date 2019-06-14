@@ -21,7 +21,7 @@ def main():
     parser.add_argument('-src', default=data_dir + "/test_src.txt", help='测试集源文件路径')
     parser.add_argument('-data', default=data_dir + "/reader.data", help='训练数据')
     parser.add_argument('-output_dir', default="output", help="输出路径")
-    parser.add_argument('-beam_size', type=int, default=20, help='Beam size')
+    parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
     parser.add_argument('-batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
     parser.add_argument('-device', action='store_true', default="cuda")
@@ -56,8 +56,8 @@ def main():
     bads = torch.ones((1, len(reader['dict']['tgt'])))
     for i in bad_idx:
         bads[0][i] = 100  # log(prob)<0  分别观察 0.01  100
-    # args.bad_mask = bads
-    args.bad_mask = None
+    args.bad_mask = bads
+    # args.bad_mask = None
 
     checkpoint = torch.load(args.model_path)
     model_opt = checkpoint['settings']
