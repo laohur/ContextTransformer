@@ -150,3 +150,6 @@ ctx+src+tgt 每层分开
 多样性：我们发现若输出为（包含）高频序列，以及输出序列长度过短或过长，此输出序列的损失项优化都容易导致通用回复，因此我们设计了有效的方法对这些损失项乘以一个较小的权重。有兴趣的读者可以阅读我们的论文及具体的权重计算方式。
 https://yq.aliyun.com/articles/174784
 Chat More: Deepening and Widening the Chatting Topic via A
+
+## 词显著度算法
+TF-IDF->局部词频/sqrt(全局词频)
