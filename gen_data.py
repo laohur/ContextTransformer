@@ -1,9 +1,9 @@
-import argparse
-import torch
-import os
-from time import time
-import random
-from Util import merge_gram
+# import argparse
+# import torch
+# import os
+# from time import time
+# import random
+from Util import *
 
 
 def tokenize(line):
@@ -11,10 +11,10 @@ def tokenize(line):
     # return line.split(" ")
     # words = line.split()
     # line = ''.join(line.split(" "))
-    # words = split_lans(line)
+    words = split_lans(line)
     # words = merge_gram(line)
     # line = ' '.join(words)
-    words = line.split(" ")
+    # words = line.split(" ")
     re = []
     for word in words:
         if len(word) > 9:  # "13653923571"空值

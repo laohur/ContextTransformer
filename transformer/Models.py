@@ -87,7 +87,7 @@ class SourceEncoder(nn.Module):
 
         slf_attn_mask_subseq = get_subsequent_mask(src_seq)  # batch*seq*seq
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=src_seq, seq_q=src_seq)  # batch*seq*seq
-        slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0)  # batch*seq*seq
+        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(0)  # batch*seq*seq
 
         ctx_src_attn_mask = get_attn_key_pad_mask(seq_k=ctx_seq, seq_q=src_seq)  # batch*src_seq*ctx_seq
 
@@ -145,7 +145,7 @@ class TargetDecoder(nn.Module):
 
         slf_attn_mask_subseq = get_subsequent_mask(tgt_seq)  # batch*tgt_seq*tgt_seq
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)  # batch*tgt_seq*tgt_seq
-        slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0)  # batch*tgt_seq*tgt_seq
+        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(0)  # batch*tgt_seq*tgt_seq
 
         ctx_tgt_attn_mask = get_attn_key_pad_mask(seq_k=ctx_seq, seq_q=tgt_seq)  # batch*tgt_seq*ctx_seq
         src_tgt_attn_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq)  # batch*tgt_seq*ctx_seq
@@ -178,16 +178,15 @@ class ContextTransformer(nn.Module):
     def __init__(
             self,
             n_ctx_vocab, n_src_vocab, n_tgt_vocab, len_max_seq,
-            d_word_vec=512, d_model=512, d_inner=2048, en_layers=6,
+            d_word_vec=512, d_model=512, d_inner=2048, en_layers=1,
             n_layers=6, n_head=8, d_k=64, d_v=64, dropout=0.1,
             tgt_emb_prj_weight_sharing=True, emb_src_tgt_weight_sharing=True):
 
         super().__init__()
 
-        self.ctx_encoder = ContextEncoder(
-            n_ctx_vocab=n_ctx_vocab, len_max_seq=len_max_seq,
+        self.ctx_encoder = ContextEncoder(            n_ctx_vocab=n_ctx_vocab, len_max_seq=len_max_seq,
             d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
-            n_layers=en_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout)
+            n_layers=en_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout) if(en_layers>0) else None
         # self.encoder = self.ctx_encoder
         self.encoder = None
         self.src_encoder = SourceEncoder(
@@ -218,7 +217,9 @@ class ContextTransformer(nn.Module):
             # Share the weight matrix between source & target word embeddings
             assert n_ctx_vocab == n_src_vocab == n_tgt_vocab, \
                 "To share word embedding table, the vocabulary size of src/tgt shall be the same."
-            self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight = self.tgt_decoder.tgt_word_emb.weight
+            self.tgt_decoder.tgt_word_emb.weight = self.src_encoder.src_word_emb.weight
+            if(self.ctx_encoder is not None):
+                self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight
             # self.ctx_encoder.ctx_word_emb = self.src_encoder.src_word_emb = self.tgt_decoder.tgt_word_emb #无效
         # weight会变吗
 
@@ -227,7 +228,10 @@ class ContextTransformer(nn.Module):
 
         # ctx_output = None
         # if random.random() < 1.1:
-        ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
+        if(self.ctx_encoder is None):
+            ctx_output=None
+        else:
+            ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
         # encoder = self.encoder if random.random() < 0.01 else None
         src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=self.encoder)  # batch*src_seq*512
@@ -245,8 +249,8 @@ class ContextTransformer(nn.Module):
 
 def get_non_pad_mask(seq):
     assert seq.dim() == 2
-    return seq.ne(Constants.PAD).type(torch.float).unsqueeze(-1)
-
+    # return seq.ne(Constants.PAD).type(torch.float).unsqueeze(-1)
+    return seq.ne(Constants.PAD).type(torch.float).unsqueeze(2)
 
 def get_sinusoid_encoding_table(n_position, d_hid, padding_idx=None):
     ''' Sinusoid position encoding table '''
@@ -284,8 +288,8 @@ def get_subsequent_mask(seq):
     ''' For masking out the subsequent info. '''
 
     sz_b, len_s = seq.size()
-    subsequent_mask = torch.triu(
-        torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8), diagonal=1)
+    subsequent_mask = torch.triu(  torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8), diagonal=1)
+    # subsequent_mask = torch.triu(  torch.ones((len_s, len_s), device=seq.device, dtype=torch.bool), diagonal=1)
     subsequent_mask = subsequent_mask.unsqueeze(0).expand(sz_b, -1, -1)  # b x ls x ls
 
     return subsequent_mask

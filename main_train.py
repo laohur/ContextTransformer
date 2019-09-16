@@ -18,7 +18,7 @@ def main():
     dir = "../data/jd/pure"
     parser.add_argument('-data_dir', default=dir)
     parser.add_argument('-epoch', type=int, default=30)
-    parser.add_argument('-batch_size', type=int, default=128)
+    parser.add_argument('-batch_size', type=int, default=64)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
@@ -36,7 +36,7 @@ def main():
     parser.add_argument('-save_model', default="model")
     parser.add_argument('-save_mode', type=str, choices=['all', 'best'], default='best')
     parser.add_argument('-device', action='store_true',
-                        default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+                        default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
     args = parser.parse_args()
     if not os.path.exists(args.log):
         os.mkdir(args.log)
@@ -47,7 +47,8 @@ def main():
     args.max_word_seq_len = reader['settings']["max_word_seq_len"]
 
     print("加载验证集数据")
-    valid_src = read_file(path=args.data_dir + "/valid_src.txt")
+
+    valid_src = read_file(path=args.data_dir + "/valid_src.txt",)
     valid_tgt = read_file(path=args.data_dir + "/valid_tgt.txt")
     valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
     valid_src, valid_ctx, valid_tgt = \
@@ -68,8 +69,8 @@ def main():
         collate_fn=tri_collate_fn)
 
     print("加载训练集数据")
-    begin, end = 0, sys.maxsize
-    # begin, end = 0, 10000
+    # begin, end = 0, sys.maxsize
+    begin, end = 0, 100
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
@@ -146,7 +147,7 @@ def main():
 
     optimizer0 = torch.optim.Adam(
         filter(lambda x: x.requires_grad, transformer.parameters()),
-        betas=(0.9, 0.98), eps=1e-03)
+        betas=(0.9, 0.98), eps=1e-09)
     args_optimizer = ScheduledOptim(optimizer0, args.d_model, args.n_warmup_steps)
 
     train(transformer, training_data, validation_data, args_optimizer, args)

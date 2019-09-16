@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import torch
+import sys
 import torch.utils.data
 import argparse
 from tqdm import tqdm
@@ -9,6 +10,8 @@ from transformer.Translator import Translator
 import json
 from Util import *
 from transformer.Models import ContextTransformer
+from retrive import cdscore, bleu;
+from retrive import cdscore
 
 
 def main():
@@ -24,8 +27,8 @@ def main():
     parser.add_argument('-beam_size', type=int, default=10, help='Beam size')
     parser.add_argument('-batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('-n_best', type=int, default=3, help="""多句输出""")
-    parser.add_argument('-device', action='store_true', default="cuda")
-
+    parser.add_argument('-device', action='store_true',
+                        default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
     args = parser.parse_args()
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
@@ -36,6 +39,7 @@ def main():
 
     test_src = read_file(path=args.data_dir + "/test_src.txt")
     test_ctx = read_file(path=args.data_dir + "/test_attr.txt")
+    test_tgt = read_file(path=args.data_dir + "/test_tgt.txt")
     test_src, test_ctx, _ = digitalize(src=test_src, tgt=None, ctx=test_ctx, max_sent_len=20,
                                        word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
 
@@ -89,22 +93,44 @@ def main():
     translator.model.eval()
 
     path = args.output_dir + '/test_out.txt'
-    with open(path, 'w', encoding="utf-8") as f:
-        for batch in tqdm(test_loader, mininterval=0.1, desc='  - (Test)', leave=False):
-            all_hyp, all_scores = translator.translate_batch(*batch)
-            for idx_seqs in all_hyp:  # batch
-                answers = []
-                for idx_seq in idx_seqs:  # n_best
-                    end_pos = len(idx_seq)
-                    for i in range(len(idx_seq)):
-                        if idx_seq[i] == Constants.EOS:
-                            end_pos = i
-                            break
-                    pred_line = ''.join([test_loader.dataset.tgt_idx2word[idx] for idx in idx_seq[:end_pos]])
-                    answers.append(pred_line)
-                f.write("\t".join(answers) + '\n')
-    print('[Info] 测试完成，文件写入' + path)
+    predicts = [];
+
+    for batch in tqdm(test_loader, mininterval=0.1, desc='  - (Test)', leave=False):
+        all_hyp, all_scores = translator.translate_batch(*batch)
+        for idx_seqs in all_hyp:  # batch
+            answers = []
+            for idx_seq in idx_seqs:  # n_best
+                end_pos = len(idx_seq)
+                for i in range(len(idx_seq)):
+                    if idx_seq[i] == Constants.EOS:
+                        end_pos = i
+                        break
+                pred_line = ' '.join([test_loader.dataset.tgt_idx2word[idx] for idx in idx_seq[:end_pos]])
+                answers.append(pred_line)
+            # f.write("\t".join(answers) + '\n')
+            # answers_line = "\t".join(answers)
+            predicts.append(answers)
+
+    # with open(path, 'w', encoding="utf-8") as f:
+    #     f.write("\n".join(predicts))
+    # print('[Info] 测试完成，文件写入' + path)
+
+    docBleu = 0.0
+    docCdscore = 0.0
+    for i in range(len(test_tgt)):
+        # for answer in predicts[i].split("\t"):
+        print(test_tgt[i] + "----->" + "_".join(predicts[i]))
+        # bleu = get_moses_multi_bleu([test_tgt[i]] * 3, predicts[i], lowercase=True)
+        bleu_score = bleu([test_tgt[i]], predicts[i]);
+        docBleu += bleu_score
+        cdscore = cdscore([test_tgt[i]], predicts[i])
+        docCdscore += cdscore
+        print(" cd_score:",cdscore," bleu:",bleu_score)
+    docBleu /= len(test_tgt)
+    docCdscore /= len(test_tgt)
+    print(" doc bleu-->" + str(docBleu) + "   docCdscore-->" + str(docCdscore))
 
 
 if __name__ == "__main__":
     main()
+    sys.exit()

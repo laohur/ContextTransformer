@@ -1,0 +1,12 @@
+epoch, loss, ppl, accuracy
+ppl:  1.26014, accuracy: 0.000 %,cd_score:1.587,bleu_score:0.000
+ppl:  1.25979, accuracy: 0.000 %,cd_score:1.587,bleu_score:0.000
+ppl:  1.25926, accuracy: 0.000 %,cd_score:1.587,bleu_score:0.000
+ppl:  1.25853, accuracy: 0.000 %,cd_score:2.129,bleu_score:0.000
+ppl:  1.25762, accuracy: 0.000 %,cd_score:2.129,bleu_score:0.000
+ppl:  1.25652, accuracy: 1.370 %,cd_score:3.240,bleu_score:0.000
+ppl:  1.25524, accuracy: 2.740 %,cd_score:4.475,bleu_score:0.000
+ppl:  1.25378, accuracy: 2.740 %,cd_score:4.475,bleu_score:0.000
+ppl:  1.25215, accuracy: 4.110 %,cd_score:7.438,bleu_score:0.000
+ppl:  1.25035, accuracy: 4.110 %,cd_score:9.290,bleu_score:0.000
+ppl:  1.24841, accuracy: 5.479 %,cd_score:11.226,bleu_score:0.000

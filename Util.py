@@ -10,7 +10,7 @@ import numpy as np
 import sys
 import random
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
 def char_type(c):  # 判断字符类型
