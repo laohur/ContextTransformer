@@ -141,7 +141,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         # forward
         optimizer.zero_grad()
-        if(args.en_layers==0):
+        if (args.en_layers == 0):
             pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
         else:
             pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
@@ -177,7 +177,7 @@ def eval_epoch(model, validation_data, args):
 
     bleu_score = 0.0
     cd_score = 0.0
-    n_line=0
+    n_line = 0
 
     with torch.no_grad():
         for batch in tqdm(validation_data, mininterval=2, desc='  - (验证) ', leave=False):
@@ -194,7 +194,7 @@ def eval_epoch(model, validation_data, args):
                     print("  ---", src, '-->', tgt, "<--", ctx)
 
             # forward
-            if(args.en_layers==0):
+            if (args.en_layers == 0):
                 pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
             else:
                 pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
@@ -211,23 +211,20 @@ def eval_epoch(model, validation_data, args):
             if args != None and random.random() <= 1:
                 batch_size = gold.shape[0]
                 seq_len = gold.shape[1]
-                n_line+=batch_size
+                n_line += batch_size
 
                 gold2 = gold.cpu().tolist()
                 pred2 = pred.max(1)[1].view(batch_size, seq_len).cpu().tolist()
 
                 for i in range(batch_size):
-                    g = [x for x in gold2[i] if x > 3]
-                    p = [x for x in pred2[i] if x > 3]
+                    g = [args.idx2word[x] for x in gold2[i] if x > 3]
+                    p = [args.idx2word[x] for x in pred2[i] if x > 3]
                     if (len(g) == 0 or len(p) == 0):
                         continue
-                    g2 = ' '.join([args.idx2word[idx] for idx in g])
-                    p2 = ' '.join([args.idx2word[idx] for idx in p])
                     if (i == 1):
-                        print(p2, '--应为-->', g2)
-                    cd_score += cdscore([g], [p])
-                    bleu_score += bleu([g2], [p2])
-
+                        print(p, '--应为-->', g)
+                    cd_score += cdscore([p], [g])
+                    bleu_score += bleu([p], [g])
 
             # if not saved:
             #     # 输入模型

@@ -50,13 +50,14 @@ def read_qst(path):
     return questions
 
 
-def split_grams(line, n_gram=2):
-    tokens = tokenize(line)
+def split_grams(tokens, n_gram=2):
+    if(isinstance(tokens,str)):
+        tokens = tokenize(tokens)
+    if len(tokens) <= n_gram:
+        return tokens
     grams = []
     for i in range(len(tokens) - n_gram):
         grams.append(''.join(tokens[i:i + n_gram]))
-    if len(grams) == 0:
-        grams.append(line)
     return grams
 
 
@@ -71,11 +72,12 @@ def split_grams0(line, n_gram=2):
 
 
 def cdrate(q, k, ngram=2):
+    if (not isinstance(q, list) or not isinstance(k, list)):
+        print(" not all list!", k, q)
+        return -1000000
     # comprehensive + determine -->  cdscore
-    if (isinstance(q, str)):
-        q = split_grams(q, ngram)
-    if (isinstance(k, str)):
-        k = split_grams(k, ngram)
+    q = split_grams(q, ngram)
+    k = split_grams(k, ngram)
     k = list(k)
     klen = len(k)
     if (klen == 0 or len(q) == 0):
@@ -96,7 +98,7 @@ def cdrate(q, k, ngram=2):
 
 def cdscore(hypothes, references, maxgrams=4):
     # 多个候选取平均
-    bluescore = 0
+    total_score = 0
     for hypoth in hypothes:
         score = 0
         for reference in references:
@@ -106,9 +108,9 @@ def cdscore(hypothes, references, maxgrams=4):
             avg_gram /= maxgrams
             if avg_gram > score:
                 score = avg_gram
-        bluescore += score
-    bluescore /= len(hypothes)
-    return bluescore
+        total_score += score
+    total_score /= len(hypothes)
+    return total_score
 
 
 def nearest_asw(question, doc):  # question skuid q a
@@ -153,16 +155,16 @@ def main():
 def test():
     # hypotheses = ["The brown fox jumps over the dog 笑"]
     # references = ["The quick brown fox jumps over the lazy dog 笑"]
-    hypotheses = ['吃 饱 撑 得 ， 估 计 你 女 朋 友 比 你 重 两 倍 。']
-    references = ['吃 饱 撑 得 ， 估 计 你 女 朋 友 比 你 重 两 倍 。']
+    hypotheses = "我 的 的 买 次 天 ， 的 个 还 天 段 没 点 个 点"
+    references = "我 们 刚 一 周 二 段 转 的 三 段 ， 二 段 还 有 一 点 点"
     # hypotheses = ["It is a guide to action which ensures that the military always obeys the commands of the party."]
     # references = ["It is a guide to action that ensures that the military will forever heed Party commands.","It is the guiding principle which guarantees the military forces always being under the command of the Party.","It is the practical guide for the army always to heed the directions of the party."]
 
     gram = 5
     for i in range(1, gram):
-        cd_score = cdscore(hypotheses, references, i)
+        cd_score = cdscore([hypotheses.strip().split()], [references.strip().split()], i)
         print(" cdscore  ngram:" + str(i) + "-->" + str(cd_score))
-    bleu_score = bleu(hypotheses, references)
+    bleu_score = bleu([hypotheses.strip().split()], [references.strip().split()])
     print(" bleu  score-->" + str(bleu_score))
 
 

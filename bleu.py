@@ -25,6 +25,20 @@ def fetch_data(cand, ref):
     return candidate, references
 
 
+def count_dict(words, n):
+    assert isinstance(words, list)
+    ngram_d = {}
+    limits = len(words) - n + 1
+    # loop through the sentance consider the ngram length
+    for i in range(limits):
+        ngram = ' '.join(words[i:i + n])
+        if ngram in ngram_d.keys():
+            ngram_d[ngram] += 1
+        else:
+            ngram_d[ngram] = 1
+    return ngram_d
+
+
 def count_ngram(candidate, references, n):
     clipped_count = 0
     count = 0
@@ -35,45 +49,47 @@ def count_ngram(candidate, references, n):
         ref_counts = []
         ref_lengths = []
         # Build dictionary of ngram counts
-        for reference in references:
-            # ref_sentence = reference[si]
-            ref_sentence = reference
-            ngram_d = {}
-            if (isinstance(ref_sentence, str)):
-                words = ref_sentence.strip().split()
-            else:
-                words = ref_sentence
-            if (len(words) == 0):
-                print("len(ref_sentence)==0  ", ref_sentence)
-                return 0;
-            ref_lengths.append(len(words))
-            limits = len(words) - n + 1
-            # loop through the sentance consider the ngram length
-            for i in range(limits):
-                ngram = ' '.join(words[i:i + n])
-                if ngram in ngram_d.keys():
-                    ngram_d[ngram] += 1
-                else:
-                    ngram_d[ngram] = 1
+        for ref_words in references:
+            # ref_sentence = ref_words[si]
+            # ref_sentence = ref_words
+            ngram_d = count_dict(ref_words, n)
+            # ngram_d = {}
+            # if (isinstance(ref_sentence, str)):
+            #     words = ref_sentence.strip().split()
+            # else:
+            #     words = ref_sentence
+            # if (len(words) == 0):
+            #     print("len(ref_sentence)==0  ", ref_sentence)
+            #     return 0;
+            ref_lengths.append(len(ref_words))
+            # limits = len(words) - n + 1
+            # # loop through the sentance consider the ngram length
+            # for i in range(limits):
+            #     ngram = ' '.join(words[i:i + n])
+            #     if ngram in ngram_d.keys():
+            #         ngram_d[ngram] += 1
+            #     else:
+            #         ngram_d[ngram] = 1
             ref_counts.append(ngram_d)
         # candidate
-        cand_sentence = candidate[si]
-        cand_dict = {}
-        words = cand_sentence.strip().split()
-        if (len(words) == 0):
-            print("len(cand_sentence)==0  ", cand_sentence)
-            return 0
-        limits = len(words) - n + 1
-        for i in range(0, limits):
-            ngram = ' '.join(words[i:i + n]).lower()
-            if ngram in cand_dict:
-                cand_dict[ngram] += 1
-            else:
-                cand_dict[ngram] = 1
+        cand_words = candidate[si]
+        cand_dict = count_dict(cand_words, n)
+        # cand_dict = {}
+        # words = cand_sentence.strip().split()
+        # if (len(words) == 0):
+        #     print("len(cand_sentence)==0  ", cand_sentence)
+        #     return 0
+        limits = len(cand_words) - n + 1
+        # for i in range(0, limits):
+        #     ngram = ' '.join(words[i:i + n]).lower()
+        #     if ngram in cand_dict:
+        #         cand_dict[ngram] += 1
+        #     else:
+        #         cand_dict[ngram] = 1
         clipped_count += clip_count(cand_dict, ref_counts)
         count += limits
-        r += best_length_match(ref_lengths, len(words))
-        c += len(words)
+        r += best_length_match(ref_lengths, len(cand_words))
+        c += len(cand_words)
     if clipped_count == 0:
         pr = 0
     else:
@@ -136,13 +152,13 @@ if __name__ == "__main__":
     # hypotheses, references = fetch_data("candidate.txt", "testSet")
     # hypotheses = ["It is a guide to action which ensures that the military always obeys the commands of the party."]
     # references = ["It is a guide to action that ensures that the military will forever heed Party commands.","It is the guiding principle which guarantees the military forces always being under the command of the Party.","It is the practical guide for the army always to heed the directions of the party."]
-    hypotheses = ["The brown fox jumps over the dog 笑"]
-    references = ["The quick brown fox jumps over the lazy dog 笑"]
-    hypotheses = []
-    references = ["& ;"]
+    hypotheses = "The brown fox jumps over the dog 笑"
+    references = "The quick brown fox jumps over the lazy dog 笑"
+    # hypotheses = []
+    # references = ["& ;"]
     # hypotheses = ["The brown fox jumps over the dog 笑", "The brown fox jumps over the dog 2 笑"]
     # references = ["The quick brown fox jumps over the lazy dog 笑", "The quick brown fox jumps over the lazy dog 笑"]
-    bleu_score = bleu(hypotheses, references)
+    bleu_score = bleu([hypotheses.strip().split()], [references.strip().split()])
     print(bleu_score)
     out = open('bleu_score.txt', 'w')
     out.write(str(bleu))
