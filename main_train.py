@@ -3,7 +3,7 @@ import os
 import argparse
 import torch
 import torch.utils.data
-from transformer.Models import ContextTransformer
+from transformer.Models import ContextTransformer,Transformer
 from transformer.Optim import ScheduledOptim
 # from trainer import train
 from dataset import SeqDataset, paired_collate_fn, tri_collate_fn
@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
-    parser.add_argument('-en_layers', type=int, default=1)
+    parser.add_argument('-en_layers', type=int, default=0)
     parser.add_argument('-n_layers', type=int, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
@@ -70,7 +70,7 @@ def main():
 
     print("加载训练集数据")
     # begin, end = 0, sys.maxsize
-    begin, end = 0, 100
+    begin, end = 0, 10000
     train_src = read_file(path=args.data_dir + "/train_src.txt", begin=begin, end=end)
     train_tgt = read_file(path=args.data_dir + "/train_tgt.txt", begin=begin, end=end)
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
@@ -124,6 +124,21 @@ def main():
             n_layers=model_opt.n_layers,
             n_head=model_opt.n_head,
             dropout=model_opt.dropout)
+        if(args.en_layers==0):
+            transformer = Transformer(
+                args.src_vocab_size,
+                args.tgt_vocab_size,
+                args.max_token_seq_len,
+                tgt_emb_prj_weight_sharing=args.proj_share_weight,
+                emb_src_tgt_weight_sharing=args.embs_share_weight,
+                d_k=args.d_k,
+                d_v=args.d_v,
+                d_model=args.d_model,
+                d_word_vec=args.d_word_vec,
+                d_inner=args.d_inner_hid,
+                n_layers=args.n_layers,
+                n_head=args.n_head,
+                dropout=args.dropout).to(args.device)
         transformer.load_state_dict(checkpoint['model'])
         transformer = transformer.to(args.device)
         print('[Info] 装入模型，继续训练')
@@ -144,6 +159,21 @@ def main():
             n_layers=args.n_layers,
             n_head=args.n_head,
             dropout=args.dropout).to(args.device)
+        if(args.en_layers==0):
+            transformer = Transformer(
+                args.src_vocab_size,
+                args.tgt_vocab_size,
+                args.max_token_seq_len,
+                tgt_emb_prj_weight_sharing=args.proj_share_weight,
+                emb_src_tgt_weight_sharing=args.embs_share_weight,
+                d_k=args.d_k,
+                d_v=args.d_v,
+                d_model=args.d_model,
+                d_word_vec=args.d_word_vec,
+                d_inner=args.d_inner_hid,
+                n_layers=args.n_layers,
+                n_head=args.n_head,
+                dropout=args.dropout).to(args.device)
 
     optimizer0 = torch.optim.Adam(
         filter(lambda x: x.requires_grad, transformer.parameters()),

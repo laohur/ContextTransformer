@@ -44,7 +44,7 @@ def count_ngram(candidate, references, n):
             else:
                 words = ref_sentence
             if (len(words) == 0):
-                print("len(ref_sentence)==0  ")
+                print("len(ref_sentence)==0  ", ref_sentence)
                 return 0;
             ref_lengths.append(len(words))
             limits = len(words) - n + 1
@@ -60,8 +60,8 @@ def count_ngram(candidate, references, n):
         cand_sentence = candidate[si]
         cand_dict = {}
         words = cand_sentence.strip().split()
-        if(len(words)==0):
-            print("len(cand_sentence)==0  ")
+        if (len(words) == 0):
+            print("len(cand_sentence)==0  ", cand_sentence)
             return 0
         limits = len(words) - n + 1
         for i in range(0, limits):
@@ -120,8 +120,9 @@ def geometric_mean(precisions):
 
 
 def bleu(candidate, references):
-    if(candidate==None or references==None or len(candidate)==0 or len(references)==0 ):
-        return 0;
+    if (candidate == None or references == None or len(candidate) == 0 or len(references) == 0):
+        print(candidate, references)
+        return 0
     precisions = []
     for i in range(4):
         pr, bp = count_ngram(candidate, references, i + 1)

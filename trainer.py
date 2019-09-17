@@ -141,7 +141,10 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         # forward
         optimizer.zero_grad()
-        pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
+        if(args.en_layers==0):
+            pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
+        else:
+            pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
         # _ = torch.nn.utils.clip_grad_norm_(model.parameters(), 50)
         # backward
         loss, n_correct = eval_performance(pred, gold, smoothing=smoothing, args=args)
@@ -191,7 +194,10 @@ def eval_epoch(model, validation_data, args):
                     print("  ---", src, '-->', tgt, "<--", ctx)
 
             # forward
-            pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
+            if(args.en_layers==0):
+                pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
+            else:
+                pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
             loss, n_correct = eval_performance(pred, gold, smoothing=False, args=args)
 
             # note keeping
@@ -236,10 +242,10 @@ def eval_epoch(model, validation_data, args):
             #                                    export_params=True)  # store the trained parameter weights inside the model file
             #     saved=True
 
-    loss_per_word = total_loss / n_line
-    accuracy = n_word_correct / n_line
-    bleu_score /= batch_size
-    cd_score /= batch_size
+    loss_per_word = total_loss / n_word_total
+    accuracy = n_word_correct / n_word_total
+    bleu_score /= n_line
+    cd_score /= n_line
     # loss += 200 - cd_score - bleu_score
     # print("  [eval_performance]--- loss:", loss, " cd_rate:", cd_score, " bleu:", bleu_score)
 
