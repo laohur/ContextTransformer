@@ -3,3 +3,6 @@ __pycache__
 *.pyc
 /__pycache__
 /log
+/log/
+/__pycache__/
+*/__pycache__/
