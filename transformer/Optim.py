@@ -36,7 +36,7 @@ class ScheduledOptim():
         for param_group in self._optimizer.param_groups:
             param_group['lr'] = lr
 
-        if self.n_current_steps % 1000 == 0:
+        if self.n_current_steps % 10000 == 0:
             print("self.n_current_steps init_lr lr", self.n_current_steps, self.init_lr, lr)
 
 

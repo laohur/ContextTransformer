@@ -16,8 +16,8 @@ from retrive import cdscore, bleu;
 
 def train(model, training_data, validation_data, optimizer, args):
     ''' 开始训练'''
-    log_train_file = args.log + '/train.log'
-    log_valid_file = args.log + '/valid.log'
+    log_train_file = args.log + '/train_'+str(args.en_layers)+'_'+str(args.n_layers)+'.log'
+    log_valid_file = args.log + '/valid_'+str(args.en_layers)+'_'+str(args.n_layers)+'.log'
 
     print('[Info] 训练记录写入 {} and {}'.format(log_train_file, log_valid_file))
 
@@ -55,7 +55,7 @@ def train(model, training_data, validation_data, optimizer, args):
                 model_name = args.log + '/' + args.save_model + '_accu_{accu:3.3f}.ckpt'.format(accu=100 * valid_accu)
             elif args.save_mode == 'best':
                 if valid_accu >= max(valid_accus):
-                    model_name = args.log + '/' + args.save_model + '.ckpt'
+                    model_name = args.log + '/' + args.save_model +'_'+str(args.en_layers)+'_'+str(args.n_layers)+ '.ckpt'
             if model_name:
                 torch.save(checkpoint, model_name)
                 print('    - [Info] 模型保存于' + model_name)
@@ -108,7 +108,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < 0.0001:  # 每个批次反向传播，不能发散了
+        if random.random() < -0.0001:  # 每个批次反向传播，不能发散了
             try:  # 有可能张量长度不一样，丢1弃。
                 num = min(1, int(args.batch_size * 0.1))
                 start = random.randint(0, src_pos.shape[0] - num)
@@ -120,7 +120,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
                 if tgt_seq.shape[1] != tmp_tgt_seq.shape[1]:
                     print("tgt_seq.shape, tmp_tgt_seq.shape", tgt_seq.shape, tmp_tgt_seq.shape)
 
-                if random.random() < 0.00001:  #
+                if random.random() < -0.00001:  #
                     for i in range(num):
                         ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[start + i]])
                         src = ''.join([args.idx2word[idx.item()] for idx in src_seq[start + i]])

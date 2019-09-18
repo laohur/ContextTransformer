@@ -3,7 +3,7 @@ import os
 import argparse
 import torch
 import torch.utils.data
-from transformer.Models import ContextTransformer,Transformer
+from transformer.Models import ContextTransformer, Transformer
 from transformer.Optim import ScheduledOptim
 # from trainer import train
 from dataset import SeqDataset, paired_collate_fn, tri_collate_fn
@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
-    parser.add_argument('-en_layers', type=int, default=1)
+    parser.add_argument('-en_layers', type=int, default=0)  # ContextLayers
     parser.add_argument('-n_layers', type=int, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
@@ -48,7 +48,7 @@ def main():
 
     print("加载验证集数据")
 
-    valid_src = read_file(path=args.data_dir + "/valid_src.txt",)
+    valid_src = read_file(path=args.data_dir + "/valid_src.txt", )
     valid_tgt = read_file(path=args.data_dir + "/valid_tgt.txt")
     valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
     valid_src, valid_ctx, valid_tgt = \
@@ -63,7 +63,7 @@ def main():
             src_insts=valid_src,
             ctx_insts=valid_ctx,
             tgt_insts=valid_tgt
-            ),
+        ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn)
@@ -86,7 +86,7 @@ def main():
             src_insts=train_src,
             ctx_insts=train_ctx,
             tgt_insts=train_tgt
-            ),
+        ),
         num_workers=4,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn,
@@ -124,7 +124,7 @@ def main():
             n_layers=model_opt.n_layers,
             n_head=model_opt.n_head,
             dropout=model_opt.dropout)
-        if(args.en_layers==0):
+        if (args.en_layers == 0):
             transformer = Transformer(
                 args.src_vocab_size,
                 args.tgt_vocab_size,
@@ -159,7 +159,7 @@ def main():
             n_layers=args.n_layers,
             n_head=args.n_head,
             dropout=args.dropout).to(args.device)
-        if(args.en_layers==0):
+        if (args.en_layers == 0):
             transformer = Transformer(
                 args.src_vocab_size,
                 args.tgt_vocab_size,

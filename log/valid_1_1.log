@@ -1,0 +1,6 @@
+epoch, loss, ppl, accuracy
+ppl:  1.01283, accuracy: 30.448 %,cd_score:11.488,bleu_score:0.891
+ppl:  1.01220, accuracy: 33.134 %,cd_score:12.843,bleu_score:0.956
+ppl:  1.01160, accuracy: 31.642 %,cd_score:10.809,bleu_score:0.786
+ppl:  1.01144, accuracy: 33.134 %,cd_score:13.111,bleu_score:0.870
+ppl:  1.01121, accuracy: 33.433 %,cd_score:14.427,bleu_score:1.205
