@@ -6,7 +6,7 @@ import json
 import math
 from time import time
 import os
-from Util import merge_gram
+from Util import merge_gram,splitgrams
 import sys
 
 
@@ -16,7 +16,8 @@ def tokenize(line):
     # words = line.split()
     # line = ''.join(line.split(" "))
     # words = split_lans(line)
-    words = merge_gram(line)
+    # words = merge_gram(line)
+    words=splitgrams(line)
     # line = ' '.join(words)
     # words = line.split(" ")
     re = []
@@ -96,7 +97,7 @@ def build_vocab_idx(word_count, min_word_count, max_words=100000):
             else:
                 ignored_word_count += 1
 
-    frequency = {}
+    frequency = [-1]*len(word2idx)
     for word, idx in word2idx.items():
         if idx < 4:
             frequency[idx] = -1
@@ -122,10 +123,10 @@ def count_file(mydir):
         for mark in marks:
             source = mydir + "/" + name + "_" + mark + ".txt.untoken"
             target = mydir + "/" + name + "_" + mark + ".txt"
-            if mark == "attr":
-                token_file(source=source, target=target, counter=None)
-            else:
-                token_file(source=source, target=target, counter=counter)
+            # if mark == "attr":
+            #     token_file(source=source, target=target, counter=None)
+            # else:
+            token_file(source=source, target=target, counter=counter)
 
     counter = dict(sorted(counter.items(), key=lambda kv: kv[1], reverse=True))
 
@@ -136,13 +137,11 @@ def count_file(mydir):
 
 
 def main(dir):
-    # dir = "../data/jd/middle"
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-save_dir', default=dir)
     parser.add_argument('-counter_path', default=dir + "/counter.bin")
-    parser.add_argument('-max_len', '--max_word_seq_len', type=int, default=20)
-    parser.add_argument('-min_word_count', type=int, default=9)
+    parser.add_argument('-max_len', '--max_word_seq_len', type=int, default=30)
+    parser.add_argument('-min_word_count', type=int, default=5)
     parser.add_argument('-keep_case', action='store_true', default=False)
     parser.add_argument('-share_vocab', action='store_true', default=True)
     parser.add_argument('-vocab', default=None)
@@ -172,73 +171,9 @@ def main(dir):
 
 if __name__ == '__main__':
     t0 = time()
+    # mydir = "../data/jd/big"
     # mydir = "../data/jd/middle"
     mydir = "../data/jd/pure"
     count_file(mydir)
     main(mydir)
     print(time() - t0, "秒完成vocab.py")
-
-'''
-C:\ProgramData\Anaconda3\python.exe "C:\Program Files\JetBrains\PyCharm Professional Edition with Anaconda plugin 2019.1.2\helpers\pydev\pydevconsole.py" --mode=client --port=54353
-import sys; print('Python %s on %s' % (sys.version, sys.platform))
-sys.path.extend(['D:\\code\\ContextTransformer', 'D:/code/ContextTransformer'])
-Python 3.7.3 (default, Mar 27 2019, 17:13:21) [MSC v.1915 64 bit (AMD64)]
-Type 'copyright', 'credits' or 'license' for more information
-IPython 7.4.0 -- An enhanced Interactive Python. Type '?' for help.
-PyDev console: using IPython 7.4.0
-Python 3.7.3 (default, Mar 27 2019, 17:13:21) [MSC v.1915 64 bit (AMD64)] on win32
-runfile('D:/code/ContextTransformer/vocab.py', wdir='D:/code/ContextTransformer')
-token_file分词 D:\code\data\jd\pure\test_src.txt.untoken 将写入 D:\code\data\jd\pure\test_src.txt
-第一条 这个是需要充电么？
-../data/jd/pure/test_src.txt.untoken 已全部分词至 ../data/jd/pure/test_src.txt
-token_file分词 D:\code\data\jd\pure\test_tgt.txt.untoken 将写入 D:\code\data\jd\pure\test_tgt.txt
-第一条 当然要冲呀！
-../data/jd/pure/test_tgt.txt.untoken 已全部分词至 ../data/jd/pure/test_tgt.txt
-token_file分词 D:\code\data\jd\pure\test_attr.txt.untoken 将写入 D:\code\data\jd\pure\test_attr.txt
-../data/jd/pure/test_attr.txt.untoken 不计入词频
-第一条 雅诗米 生日礼物女生男生实用送女朋友 毕业创意礼品送老婆爱人闺蜜表白结婚 抖音热门同款维他命榨汁杯 创意礼品礼品礼品箱包
-../data/jd/pure/test_attr.txt.untoken 已全部分词至 ../data/jd/pure/test_attr.txt
-token_file分词 D:\code\data\jd\pure\valid_src.txt.untoken 将写入 D:\code\data\jd\pure\valid_src.txt
-第一条 这个手机黄牛要赚死啊
-../data/jd/pure/valid_src.txt.untoken 已全部分词至 ../data/jd/pure/valid_src.txt
-token_file分词 D:\code\data\jd\pure\valid_tgt.txt.untoken 将写入 D:\code\data\jd\pure\valid_tgt.txt
-第一条 赚多少呢
-../data/jd/pure/valid_tgt.txt.untoken 已全部分词至 ../data/jd/pure/valid_tgt.txt
-token_file分词 D:\code\data\jd\pure\valid_attr.txt.untoken 将写入 D:\code\data\jd\pure\valid_attr.txt
-../data/jd/pure/valid_attr.txt.untoken 不计入词频
-第一条 黑鲨游戏手机 6GB+64GB 极夜黑 液冷更快 全网通4G 双卡双待手机手机通讯手机
-../data/jd/pure/valid_attr.txt.untoken 已全部分词至 ../data/jd/pure/valid_attr.txt
-token_file分词 D:\code\data\jd\pure\train_src.txt.untoken 将写入 D:\code\data\jd\pure\train_src.txt
-第一条 假清真？详情页中根本没出现清真标。
-第 100000 行 能不能将手机游戏投屏上去啊？
- ---> 能 不 能 将 手 机 游 戏 投 屏 上 去 啊 ？ 
-已统计词频 6523
-第 200000 行 背后信号切口连处，是塑料还是金属
- ---> 背 后 信 号 切 口 连 处 ， 是 塑 料 还 是 金 属 
-已统计词频 8196
-../data/jd/pure/train_src.txt.untoken 已全部分词至 ../data/jd/pure/train_src.txt
-token_file分词 D:\code\data\jd\pure\train_tgt.txt.untoken 将写入 D:\code\data\jd\pure\train_tgt.txt
-第一条 没必要假
-第 100000 行 当然可以。
- ---> 当 然 可 以 。 
-已统计词频 10224
-第 200000 行 肯定是塑料啊，不然怎么传输信号
- ---> 肯 定 是 塑 料 啊 ， 不 然 怎 么 传 输 信 号 
-已统计词频 11083
-../data/jd/pure/train_tgt.txt.untoken 已全部分词至 ../data/jd/pure/train_tgt.txt
-token_file分词 D:\code\data\jd\pure\train_attr.txt.untoken 将写入 D:\code\data\jd\pure\train_attr.txt
-../data/jd/pure/train_attr.txt.untoken 不计入词频
-第一条 伊利 纯牛奶250ml*24盒牛奶乳品饮料冲调食品饮料
-第 100000 行 创维(skyworth) 企鹅极光t2 智能网络电视机顶盒4核16g闪存 高清电视盒子无线wifi网络盒子网络产品电脑、办公
- ---> 创 维 ( skyworth ) 企 鹅 极 光 t 2 智 能 网 络 电 视 机 顶 盒 4 核 16 g 闪 存 高 清 电 视 盒 子 无 线 wifi 网 络 盒 子 网 络 产 品 电 脑 、 办 公 
-第 200000 行 魅族 魅蓝 e3 全面屏手机  全网通公开版 6gb+64gb 曜石黑 移动联通电信4g手机 双卡双待手机手机通讯手机
- ---> 魅 族 魅 蓝 e 3 全 面 屏 手 机 全 网 通 公 开 版 6 gb + 64 gb 曜 石 黑 移 动 联 通 电 信 4 g 手 机 双 卡 双 待 手 机 手 机 通 讯 手 机 
-../data/jd/pure/train_attr.txt.untoken 已全部分词至 ../data/jd/pure/train_attr.txt
-词频文件已经写入 ../data/jd/pure/counter.json ../data/jd/pure/counter.bin
-[Info] 原始词库 = 11704
-[Info] 频繁字典大小 = 4297, 最低频数 = 9
-[Info] 忽略罕词数 = 6717 爆表词汇数 -88296
-[Info] 保存词汇到 D:\code\data\jd\pure\reader.json
-[Info] 保存词汇到 D:\code\data\jd\pure\reader.data
-51.52518820762634 秒完成vocab.py
-'''

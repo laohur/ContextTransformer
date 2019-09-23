@@ -136,7 +136,7 @@ pure 1+1 e7 30%
 78 cdrate
 79 自写bleu
 80 onnx  算子不支持，要升级
-
+81 dropout*2 liner->1024
 下一步
 81 比较cdrate、bleu损失  en_layer
 txt tool 数据增强

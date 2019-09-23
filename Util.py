@@ -10,7 +10,10 @@ import numpy as np
 import sys
 import random
 
+
 # device = "cuda:0" if torch.cuda.is_available() else "cpu"
+def splitgrams(line):
+    return list(line)
 
 
 def char_type(c):  # 判断字符类型
@@ -156,7 +159,7 @@ def build_vocab_idx(word_insts, min_word_count, max_words=100000):
             else:
                 ignored_word_count += 1
 
-    frequency = {}
+    frequency = [-1] * len(word2idx)
     for word, idx in word2idx.items():
         if idx < 4:
             frequency[idx] = -1
@@ -174,16 +177,22 @@ def convert_w2id_seq(word_insts, word2idx):
 
 
 def line2idx(line, word2idx):
-    idx = []
-    for token in line.split(" "):
-        id = word2idx.get(token, Constants.UNK)
-        if id >= 4:  # 是否因为去除unk变差 4
-            idx.append(id)
+    # idx = line.split(' ')
+    idx = [word2idx.get(token, Constants.UNK) for token in line.split(' ') if token]
+    # for token in line.split(" "):
+    #     id = word2idx.get(token, Constants.UNK)
+    #     # if id >= 4:  # 是否因为去除unk变差 4
+    #     idx.append(id)
+    # return np.asarray(idx, int)
     return idx
 
 
 def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
     t = 100000
+    indices = np.arange(4, len(index2freq), 1)
+    logits = np.array(index2freq[4:])
+    denominator = np.sum(logits)
+    logits = logits / denominator
     trimmed_src_count, trimmed_tgt_count, trimmed_ctx_count = 0, 0, 0
     for i in range(len(src)):
         if i % t == 0:
@@ -191,6 +200,7 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
             print("\t ctx[i]", ctx[i])
         src[i] = line2idx(src[i], word2idx)
         ctx[i] = line2idx(ctx[i], word2idx)
+
         if tgt != None:
             if i % t == 0:
                 print("\t tgt[i] ", "-->", tgt[i])
@@ -198,13 +208,35 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
             if len(tgt[i]) > max_sent_len:
                 trimmed_tgt_count += 1
         # tgt[i] = [Constants.BOS_WORD] + line2idx(tgt[i], word2idx) + [Constants.EOS_WORD]
-        if index2freq != None:
-            if topk == 0 or random.random() < 0.3:
+        # 数据增强 提取关键词 删词 加词 换词 换位
+        if index2freq == None:  # 不再提取回答
+            if topk == 0 or random.random() < 0.1:
                 tops = np.random.randint(low=4, high=len(word2idx) - 1, size=topk).tolist()
             else:
-                tops = top_words(tgt[i], index2freq)
-                tops = tops[:topk]
-            src[i] += tops  # 从末尾加，长句多独特，短句更类似。
+                tops = random.sample(tgt[i], min(topk, len(tgt[i])))
+
+                # tops = top_words(tgt[i], index2freq)
+                # tops = tops[:topk]
+                # tops = np.random.choice(tgt[i], topk, replace=True, p=logits)
+                src[i] += tops  # 从末尾加，长句多独特，短句更类似。
+            # src[i] = np.append(src[i], np.asarray(tops, int))
+        if (random.random() < 0.1):  # insert
+            selected = np.random.choice(indices, 1, replace=False, p=logits)
+            # token = 4 + random.randint(0, len(index2freq) - 5)
+            # index = random.randint(0, len(src[i]))
+
+            index = np.random.randint(0, len(src[i]))
+            src[i].insert(index, selected[0])
+        if (random.random() < 0.1):  # swap
+            a = np.random.randint(0, len(src[i]))
+            b = np.random.randint(0, len(src[i]))
+            c = src[i][a]
+            src[i][a] = src[i][b]
+            src[i][b] = c
+        if (random.random() < 0.1 and len(src[i]) > 1):  # del
+            index = np.random.randint(0, len(src[i]))
+            del src[i][math.floor(index)]
+
         if len(src[i]) > max_sent_len:
             trimmed_src_count += 1
         if len(ctx[i]) > max_sent_len:
@@ -224,6 +256,7 @@ def digitalize(src, tgt, ctx, max_sent_len, word2idx, index2freq, topk):
 
 
 def top_words(seq, index2freq):  # [0,1,2
+    # selected = np.random.choice(seq, 1, replace=False, p=logits)
     dt = {}
     for id in seq:
         # id -= 4  # [PAD,四个标记符]
@@ -263,3 +296,31 @@ def add_keywords(src, tgt, word2index, topk, frequency):  # [2,9,67,4,3,0,0,0]
 
         src[i][1:1] = tops
     return src
+
+
+def printModel(model):
+    print(model)
+
+    params = list(model.parameters())
+    # print(params)
+    # total = 0
+    # level = 0
+    # for i in params:
+    #     count = 1
+    #     print("该层的结构：" + str(list(i.size())))
+    #     for j in i.size():
+    #         count *= j
+    #     print("该层参数和：" + str(count))
+    #     level = level + count
+    #     total += count;
+    params = model.state_dict()
+    # print(params)
+
+    for level, v in params.items():
+        size = list(v.size())
+        count = 1
+        for s in size:
+            count *= s
+        print("weight name:", level, "\tsize:\t", size, " \tcount:\t", count)  # 打印网络中的变量名
+
+    print('#  parameters:', sum(param.numel() for param in model.parameters()))

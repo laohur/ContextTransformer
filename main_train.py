@@ -14,6 +14,7 @@ from Util import *
 
 def main():
     parser = argparse.ArgumentParser(description='main_train.py')
+    # dir = "../data/jd/big"
     # dir = "../data/jd/middle"
     dir = "../data/jd/pure"
     parser.add_argument('-data_dir', default=dir)
@@ -21,6 +22,7 @@ def main():
     parser.add_argument('-batch_size', type=int, default=64)
     parser.add_argument('-d_word_vec', type=int, default=512)
     parser.add_argument('-d_model', type=int, default=512)
+    # parser.add_argument('-d_inner_hid', type=int, default=1024)
     parser.add_argument('-d_inner_hid', type=int, default=2048)
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
@@ -33,11 +35,12 @@ def main():
     parser.add_argument('-proj_share_weight', action='store_true', default=True)
     parser.add_argument('-label_smoothing', action='store_true', default=True)
     parser.add_argument('-log', default="log")
-    parser.add_argument('-save_model', default="model")
+    # parser.add_argument('-save_model', default="model")
     parser.add_argument('-save_mode', type=str, choices=['all', 'best'], default='best')
     parser.add_argument('-device', action='store_true',
                         default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
     args = parser.parse_args()
+    args.model_name = str(args.en_layers) + '_' + str(args.n_layers) + '_'
     if not os.path.exists(args.log):
         os.mkdir(args.log)
 
@@ -53,7 +56,7 @@ def main():
     valid_ctx = read_file(path=args.data_dir + "/valid_attr.txt")
     valid_src, valid_ctx, valid_tgt = \
         digitalize(src=valid_src, tgt=valid_tgt, ctx=valid_ctx, max_sent_len=args.max_token_seq_len - 2,
-                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
+                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=3)
     # training_data, validation_data = prepare_dataloaders(reader, data, args)
     validation_data = torch.utils.data.DataLoader(
         SeqDataset(
@@ -65,9 +68,10 @@ def main():
             tgt_insts=valid_tgt
         ),
         num_workers=4,
+        pin_memory=False,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn)
-
+    del valid_src, valid_ctx, valid_tgt
     print("加载训练集数据")
     begin, end = 0, sys.maxsize
     # begin, end = 0, 100
@@ -76,7 +80,7 @@ def main():
     train_ctx = read_file(path=args.data_dir + "/train_attr.txt", begin=begin, end=end)
     train_src, train_ctx, train_tgt = \
         digitalize(src=train_src, tgt=train_tgt, ctx=train_ctx, max_sent_len=args.max_token_seq_len - 2,
-                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=3)
+                   word2idx=reader['dict']['src'], index2freq=reader["dict"]["frequency"], topk=0)
 
     training_data = torch.utils.data.DataLoader(
         SeqDataset(
@@ -88,10 +92,11 @@ def main():
             tgt_insts=train_tgt
         ),
         num_workers=4,
+        pin_memory=False,
         batch_size=args.batch_size,
         collate_fn=tri_collate_fn,
         shuffle=True)
-
+    del train_src, train_ctx, train_tgt
     args.src_vocab_size = training_data.dataset.src_vocab_size
     args.tgt_vocab_size = training_data.dataset.tgt_vocab_size
     args.ctx_vocab_size = training_data.dataset.ctx_vocab_size
@@ -104,7 +109,7 @@ def main():
 
     print(args)
 
-    args.model_path = "log/model.ckpt"
+    args.model_path = "log/"+args.model_name+".model"
     if os.path.exists(args.model_path):
         checkpoint = torch.load(args.model_path, map_location=args.device)
         model_opt = checkpoint['settings']
@@ -175,10 +180,11 @@ def main():
                 n_head=args.n_head,
                 dropout=args.dropout).to(args.device)
 
-    optimizer0 = torch.optim.Adam(
+    optimizer = torch.optim.Adam(
         filter(lambda x: x.requires_grad, transformer.parameters()),
         betas=(0.9, 0.98), eps=1e-09)
-    args_optimizer = ScheduledOptim(optimizer0, args.d_model, args.n_warmup_steps)
+    args_optimizer = ScheduledOptim(optimizer, args.d_model, args.n_warmup_steps)
+    printModel(transformer)
 
     train(transformer, training_data, validation_data, args_optimizer, args)
 

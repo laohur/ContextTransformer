@@ -16,8 +16,9 @@ from retrive import cdscore, bleu;
 
 def train(model, training_data, validation_data, optimizer, args):
     ''' 开始训练'''
-    log_train_file = args.log + '/train_'+str(args.en_layers)+'_'+str(args.n_layers)+'.log'
-    log_valid_file = args.log + '/valid_'+str(args.en_layers)+'_'+str(args.n_layers)+'.log'
+    # prefix = str(args.en_layers) + '_' + str(args.n_layers)+'_'
+    log_train_file = args.log + '/' + args.model_name + 'train.log'
+    log_valid_file = args.log + '/' + args.model_name + 'valid.log'
 
     print('[Info] 训练记录写入 {} and {}'.format(log_train_file, log_valid_file))
 
@@ -49,13 +50,13 @@ def train(model, training_data, validation_data, optimizer, args):
             'settings': args,
             'epoch': epoch_i}
 
-        if args.save_model:
+        if args.model_name is not None :
             model_name = None
             if args.save_mode == 'all':
-                model_name = args.log + '/' + args.save_model + '_accu_{accu:3.3f}.ckpt'.format(accu=100 * valid_accu)
+                model_name = args.log + '/' + args.model_name + '_accu_{accu:3.3f}.ckpt'.format(accu=100 * valid_accu)
             elif args.save_mode == 'best':
                 if valid_accu >= max(valid_accus):
-                    model_name = args.log + '/' + args.save_model +'_'+str(args.en_layers)+'_'+str(args.n_layers)+ '.ckpt'
+                    model_name = args.log + '/' + args.model_name + '.model'
             if model_name:
                 torch.save(checkpoint, model_name)
                 print('    - [Info] 模型保存于' + model_name)
@@ -108,7 +109,8 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         error = False
         # if teacher force
-        if random.random() < -0.0001:  # 每个批次反向传播，不能发散了
+        # if random.random() < -0.0001:  # 每个批次反向传播，不能发散了
+        if False:
             try:  # 有可能张量长度不一样，丢1弃。
                 num = min(1, int(args.batch_size * 0.1))
                 start = random.randint(0, src_pos.shape[0] - num)
@@ -152,7 +154,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         # update parameters
         optimizer.step_and_update_lr()
-
+        # optimizer.step()
         # note keeping
         total_loss += loss.item()
 
@@ -185,7 +187,7 @@ def eval_epoch(model, validation_data, args):
             src_seq, src_pos, ctx_seq, ctx_pos, tgt_seq, tgt_pos = map(lambda x: x.to(args.device), batch)
             gold = tgt_seq[:, 1:]
             start = random.randint(0, src_pos.shape[0] - 4)
-            if random.random() < 0.00001:
+            if random.random() < -0.00001:
                 print("  [valid]----->teacher force decoding...")
                 for i in range(start, start + 3):
                     ctx = ''.join([args.idx2word[idx.item()] for idx in ctx_seq[i]])
@@ -208,23 +210,23 @@ def eval_epoch(model, validation_data, args):
             n_word_total += n_word
             n_word_correct += n_correct
 
-            if args != None and random.random() <= 1:
-                batch_size = gold.shape[0]
-                seq_len = gold.shape[1]
-                n_line += batch_size
+            # if args != None and random.random() <= 1:
+            batch_size = gold.shape[0]
+            seq_len = gold.shape[1]
+            n_line += batch_size
 
-                gold2 = gold.cpu().tolist()
-                pred2 = pred.max(1)[1].view(batch_size, seq_len).cpu().tolist()
+            gold2 = gold.cpu().tolist()
+            pred2 = pred.max(1)[1].view(batch_size, seq_len).cpu().tolist()
 
-                for i in range(batch_size):
-                    g = [args.idx2word[x] for x in gold2[i] if x > 3]
-                    p = [args.idx2word[x] for x in pred2[i] if x > 3]
-                    if (len(g) == 0 or len(p) == 0):
-                        continue
-                    if (i == 1):
-                        print(p, '--应为-->', g)
-                    cd_score += cdscore([p], [g])
-                    bleu_score += bleu([p], [g])
+            for i in range(batch_size):
+                g = [args.idx2word[x] for x in gold2[i] if x > 3]
+                p = [args.idx2word[x] for x in pred2[i] if x > 3]
+                if (len(g) == 0 or len(p) == 0):
+                    continue
+                # if (i == 1):
+                #     print(p, '--应为-->', g)
+                cd_score += cdscore([p], [g])
+                bleu_score += bleu([p], [g])
 
             # if not saved:
             #     # 输入模型
