@@ -77,7 +77,7 @@ def main():
         d_model=model_opt.d_model,
         d_word_vec=model_opt.d_word_vec,
         d_inner=model_opt.d_inner_hid,
-        en_layers=model_opt.en_layers,
+        ct_layers=model_opt.en_layers,
         n_layers=model_opt.n_layers,
         n_head=model_opt.n_head,
         dropout=model_opt.dropout)

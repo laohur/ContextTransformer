@@ -27,7 +27,7 @@ def main():
     parser.add_argument('-d_k', type=int, default=64)
     parser.add_argument('-d_v', type=int, default=64)
     parser.add_argument('-n_head', type=int, default=8)
-    parser.add_argument('-en_layers', type=int, default=0)  # ContextLayers
+    parser.add_argument('-ct_layers', type=int, default=1)  # ContextLayers
     parser.add_argument('-n_layers', type=int, default=1)
     parser.add_argument('-n_warmup_steps', type=int, default=4000)
     parser.add_argument('-dropout', type=float, default=0.1)
@@ -40,7 +40,7 @@ def main():
     parser.add_argument('-device', action='store_true',
                         default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
     args = parser.parse_args()
-    args.model_name = str(args.en_layers) + '_' + str(args.n_layers) + '_'
+    args.model_name = str(args.ct_layers) + '_' + str(args.n_layers) + '_'
     if not os.path.exists(args.log):
         os.mkdir(args.log)
 
@@ -125,11 +125,11 @@ def main():
             d_model=model_opt.d_model,
             d_word_vec=model_opt.d_word_vec,
             d_inner=model_opt.d_inner_hid,
-            en_layers=model_opt.en_layers,
+            ct_layers=model_opt.en_layers,
             n_layers=model_opt.n_layers,
             n_head=model_opt.n_head,
             dropout=model_opt.dropout)
-        if (args.en_layers == 0):
+        if (args.ct_layers < 0):
             transformer = Transformer(
                 args.src_vocab_size,
                 args.tgt_vocab_size,
@@ -160,11 +160,11 @@ def main():
             d_model=args.d_model,
             d_word_vec=args.d_word_vec,
             d_inner=args.d_inner_hid,
-            en_layers=args.en_layers,
+            ct_layers=args.ct_layers,
             n_layers=args.n_layers,
             n_head=args.n_head,
             dropout=args.dropout).to(args.device)
-        if (args.en_layers == 0):
+        if (args.ct_layers < 0):
             transformer = Transformer(
                 args.src_vocab_size,
                 args.tgt_vocab_size,

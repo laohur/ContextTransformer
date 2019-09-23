@@ -4,7 +4,7 @@ import torch.nn as nn
 import numpy as np
 import transformer.Constants as Constants
 # from transformer.Layers import EncoderLayer, DecoderLayer
-from transformer.Layers import ContextLayer, SourceLayer, TargetLayer,EncoderLayer, DecoderLayer
+from transformer.Layers import ContextLayer, SourceLayer, TargetLayer, EncoderLayer, DecoderLayer
 import random
 
 
@@ -61,7 +61,7 @@ class SourceEncoder(nn.Module):
 
     def __init__(
             self,
-            n_src_vocab, len_max_seq, d_word_vec,
+            n_src_vocab, len_max_seq, d_word_vec,context_layers,
             n_layers, n_head, d_k, d_v,
             d_model, d_inner, dropout=0.1):
 
@@ -75,6 +75,10 @@ class SourceEncoder(nn.Module):
             get_sinusoid_encoding_table(n_position, d_word_vec, padding_idx=0), freeze=True)
 
         self.layer_stack = nn.ModuleList([
+            EncoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+            for _ in range(n_layers)])
+
+        self.context_layers = nn.ModuleList([
             SourceLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
             for _ in range(n_layers)])
 
@@ -87,7 +91,8 @@ class SourceEncoder(nn.Module):
 
         slf_attn_mask_subseq = get_subsequent_mask(src_seq)  # batch*seq*seq
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=src_seq, seq_q=src_seq)  # batch*seq*seq
-        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(0)  # batch*seq*seq
+        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(
+            0)  # batch*seq*seq
 
         ctx_src_attn_mask = get_attn_key_pad_mask(seq_k=ctx_seq, seq_q=src_seq)  # batch*src_seq*ctx_seq
 
@@ -100,7 +105,15 @@ class SourceEncoder(nn.Module):
         else:
             src_output = self.src_word_emb(src_seq) + self.position_enc(src_pos)  # batch*seq*512
 
-        for src_layer in self.layer_stack:
+        for enc_layer in self.layer_stack:
+            src_output, src_slf_attn = enc_layer(
+                src_output,
+                non_pad_mask=non_pad_mask,
+                slf_attn_mask=slf_attn_mask)
+            if return_attns:
+                src_slf_attn_list += [src_slf_attn]
+
+        for src_layer in self.context_layers:
             src_output, src_slf_attn, ctx_src_attn = src_layer(
                 src_output, ctx_output, non_pad_mask=non_pad_mask,
                 slf_attn_mask=slf_attn_mask, ctx_src_attn_mask=ctx_src_attn_mask)
@@ -119,7 +132,7 @@ class TargetDecoder(nn.Module):
 
     def __init__(
             self,
-            n_tgt_vocab, len_max_seq, d_word_vec,
+            n_tgt_vocab, len_max_seq, d_word_vec,context_layers,
             n_layers, n_head, d_k, d_v,
             d_model, d_inner, dropout=0.1):
 
@@ -133,19 +146,24 @@ class TargetDecoder(nn.Module):
             get_sinusoid_encoding_table(n_position, d_word_vec, padding_idx=0), freeze=True)
 
         self.layer_stack = nn.ModuleList([
-            TargetLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+            DecoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
             for _ in range(n_layers)])
+
+        self.context_layers = nn.ModuleList([
+            TargetLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+            for _ in range(context_layers)])
 
     def forward(self, tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=None, return_attns=False):
 
-        src_slf_attn_list, ctx_tgt_attn_list, src_tgt_attn_list = [], [], []
+        tgt_slf_attn_list, ctx_tgt_attn_list, src_tgt_attn_list = [], [], []
 
         # -- Prepare masks
         non_pad_mask = get_non_pad_mask(tgt_seq)  # batch*tgt_seq*1
 
         slf_attn_mask_subseq = get_subsequent_mask(tgt_seq)  # batch*tgt_seq*tgt_seq
         slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)  # batch*tgt_seq*tgt_seq
-        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(0)  # batch*tgt_seq*tgt_seq
+        slf_attn_mask = (slf_attn_mask_keypad.type(torch.uint8) + slf_attn_mask_subseq.type(torch.uint8)).gt(
+            0)  # batch*tgt_seq*tgt_seq
 
         ctx_tgt_attn_mask = get_attn_key_pad_mask(seq_k=ctx_seq, seq_q=tgt_seq)  # batch*tgt_seq*ctx_seq
         src_tgt_attn_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq)  # batch*tgt_seq*ctx_seq
@@ -158,13 +176,23 @@ class TargetDecoder(nn.Module):
         else:
             tgt_output = self.tgt_word_emb(tgt_seq) + self.position_enc(tgt_pos)  # batch*tgt_seq*512
 
-        for src_layer in self.layer_stack:
+        for dec_layer in self.layer_stack:
+            tgt_output, dec_slf_attn, src_tgt_attn = dec_layer(
+                tgt_output, src_output,
+                non_pad_mask=non_pad_mask,
+                slf_attn_mask=slf_attn_mask,
+                dec_enc_attn_mask=src_tgt_attn_mask)
+            if return_attns:
+                tgt_slf_attn_list += [dec_slf_attn]
+                src_tgt_attn_list += [src_tgt_attn]
+
+        for src_layer in self.context_layers:
             tgt_output, tgt_slf_attn, ctx_tgt_attn, src_tgt_attn = src_layer(
                 tgt_input=tgt_output, ctx_output=ctx_output, src_output=src_output, non_pad_mask=non_pad_mask,
                 slf_attn_mask=slf_attn_mask, ctx_tgt_attn_mask=ctx_tgt_attn_mask, src_tgt_attn_mask=src_tgt_attn_mask)
 
             if return_attns:
-                src_slf_attn_list += [tgt_slf_attn]
+                tgt_slf_attn_list += [tgt_slf_attn]
                 ctx_tgt_attn_list += [ctx_tgt_attn]
                 src_tgt_attn_list += [src_tgt_attn]
         if return_attns:
@@ -178,25 +206,26 @@ class ContextTransformer(nn.Module):
     def __init__(
             self,
             n_ctx_vocab, n_src_vocab, n_tgt_vocab, len_max_seq,
-            d_word_vec=512, d_model=512, d_inner=2048, en_layers=1,
+            d_word_vec=512, d_model=512, d_inner=2048, ct_layers=1,
             n_layers=6, n_head=8, d_k=64, d_v=64, dropout=0.1,
             tgt_emb_prj_weight_sharing=True, emb_src_tgt_weight_sharing=True):
 
         super().__init__()
 
-        self.ctx_encoder = ContextEncoder(            n_ctx_vocab=n_ctx_vocab, len_max_seq=len_max_seq,
-            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
-            n_layers=en_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout) if(en_layers>0) else None
+        self.ctx_encoder = ContextEncoder(n_ctx_vocab=n_ctx_vocab, len_max_seq=len_max_seq,
+                                          d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
+                                          n_layers=ct_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout) if (
+                ct_layers > 0) else None
         # self.encoder = self.ctx_encoder
         self.encoder = None
         self.src_encoder = SourceEncoder(
             n_src_vocab=n_src_vocab, len_max_seq=len_max_seq,
-            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
+            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,context_layers=ct_layers,
             n_layers=n_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout)
 
         self.tgt_decoder = TargetDecoder(
             n_tgt_vocab=n_tgt_vocab, len_max_seq=len_max_seq,
-            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,
+            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,context_layers=ct_layers,
             n_layers=n_layers, n_head=n_head, d_k=d_k, d_v=d_v, dropout=dropout)
 
         self.tgt_word_prj = nn.Linear(d_model, n_tgt_vocab, bias=False)
@@ -218,7 +247,7 @@ class ContextTransformer(nn.Module):
             assert n_ctx_vocab == n_src_vocab == n_tgt_vocab, \
                 "To share word embedding table, the vocabulary size of src/tgt shall be the same."
             self.tgt_decoder.tgt_word_emb.weight = self.src_encoder.src_word_emb.weight
-            if(self.ctx_encoder is not None):
+            if (self.ctx_encoder is not None):
                 self.ctx_encoder.ctx_word_emb.weight = self.src_encoder.src_word_emb.weight
             # self.ctx_encoder.ctx_word_emb = self.src_encoder.src_word_emb = self.tgt_decoder.tgt_word_emb #无效
         # weight会变吗
@@ -228,17 +257,19 @@ class ContextTransformer(nn.Module):
 
         # ctx_output = None
         # if random.random() < 1.1:
-        if(self.ctx_encoder is None):
-            ctx_output=None
+        if (self.ctx_encoder is None):
+            ctx_output = None
         else:
             ctx_output, *_ = self.ctx_encoder(ctx_seq, ctx_pos)  # batch*ctx_seq*512
 
         # encoder = self.encoder if random.random() < 0.01 else None
-        src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output, encoder=self.encoder)  # batch*src_seq*512
+        src_output, *_ = self.src_encoder(src_seq, src_pos, ctx_seq, ctx_output,
+                                          encoder=self.encoder)  # batch*src_seq*512
 
         # ctx_output = None #解码曾免去
         # encoder = self.encoder if random.random() < 0.01 else None
-        tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output, encoder=self.encoder)
+        tgt_output, *_ = self.tgt_decoder(tgt_seq, tgt_pos, ctx_seq, ctx_output, src_seq, src_output,
+                                          encoder=self.encoder)
 
         seq_logit = self.tgt_word_prj(tgt_output) * self.x_logit_scale
 
@@ -251,6 +282,7 @@ def get_non_pad_mask(seq):
     assert seq.dim() == 2
     return seq.ne(Constants.PAD).type(torch.float).unsqueeze(-1)
     # return seq.ne(Constants.PAD).type(torch.float).unsqueeze(2)
+
 
 def get_sinusoid_encoding_table(n_position, d_hid, padding_idx=None):
     ''' Sinusoid position encoding table '''
@@ -288,7 +320,7 @@ def get_subsequent_mask(seq):
     ''' For masking out the subsequent info. '''
 
     sz_b, len_s = seq.size()
-    subsequent_mask = torch.triu(  torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8), diagonal=1)
+    subsequent_mask = torch.triu(torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8), diagonal=1)
     # subsequent_mask = torch.triu(  torch.ones((len_s, len_s), device=seq.device, dtype=torch.bool), diagonal=1)
     subsequent_mask = subsequent_mask.unsqueeze(0).expand(sz_b, -1, -1)  # b x ls x ls
 
@@ -427,8 +459,8 @@ class Transformer(nn.Module):
         nn.init.xavier_normal_(self.tgt_word_prj.weight)
 
         assert d_model == d_word_vec, \
-        'To facilitate the residual connections, \
-         the dimensions of all module outputs shall be the same.'
+            'To facilitate the residual connections, \
+             the dimensions of all module outputs shall be the same.'
 
         if tgt_emb_prj_weight_sharing:
             # Share the weight matrix between target word embedding & the final logit dense layer
@@ -440,7 +472,7 @@ class Transformer(nn.Module):
         if emb_src_tgt_weight_sharing:
             # Share the weight matrix between source & target word embeddings
             assert n_src_vocab == n_tgt_vocab, \
-            "To share word embedding table, the vocabulary size of src/tgt shall be the same."
+                "To share word embedding table, the vocabulary size of src/tgt shall be the same."
             self.encoder.src_word_emb.weight = self.decoder.tgt_word_emb.weight
 
     def forward(self, src_seq, src_pos, tgt_seq, tgt_pos):

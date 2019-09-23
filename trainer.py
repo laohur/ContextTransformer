@@ -143,7 +143,7 @@ def train_epoch(model, training_data, optimizer, args, smoothing):
 
         # forward
         optimizer.zero_grad()
-        if (args.en_layers == 0):
+        if (args.ct_layers < 0):
             pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
         else:
             pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
@@ -196,7 +196,7 @@ def eval_epoch(model, validation_data, args):
                     print("  ---", src, '-->', tgt, "<--", ctx)
 
             # forward
-            if (args.en_layers == 0):
+            if (args.ct_layers < 0):
                 pred = model(src_seq, src_pos, tgt_seq, tgt_pos)
             else:
                 pred = model(ctx_seq, ctx_pos, src_seq, src_pos, tgt_seq, tgt_pos)
