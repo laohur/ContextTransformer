@@ -8,11 +8,6 @@ A PyTorch implementation of ContextTransformer for Question and Answer.
 - tqdm
 - numpy
 
-## Dependencies
-PyTorch 1.0.0  win，超过1有问题
-gtx 1060 战神笔记本
-
-
 ## Dataset
 jd:https://github.com/gsh199449/productqa
 tb:https://github.com/cooelf/DeepUtteranceAggregation
